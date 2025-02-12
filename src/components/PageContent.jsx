@@ -6,7 +6,6 @@ function PageContent() {
     <>
       <Slider />
       <ShoppingLinks />
-      
     </>
   );
 }

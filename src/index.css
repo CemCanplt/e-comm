@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+:root {
+  --Bandage-Fontu: Montserrat;
+  --Bandage-Rengi: #252b42;
+  --Light-Gray: #fafafa;
+  --ikinci-metin-rengi: #737373;
+  --ilk-renk: #23a6f0;
+}
+
+html {
+  font-family: var(--Bandage-Fontu);
+}
