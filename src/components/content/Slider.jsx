@@ -1,6 +1,8 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 
+
+
 const images = [
   {
     title: "Başlık 1",
@@ -46,6 +48,7 @@ function Slider() {
           </SwiperSlide>
         ))}
       </Swiper>
+      
     </>
   );
 }
