@@ -1,10 +1,6 @@
-// Import Swiper React components
 import { Swiper, SwiperSlide } from "swiper/react";
-
-// Import Swiper styles
 import "swiper/css";
 
-// Resimler ve metinler
 const images = [
   {
     title: "Başlık 1",
@@ -29,22 +25,26 @@ const images = [
 function Slider() {
   return (
     <>
-      <Swiper
-        className=""
-        spaceBetween={50}
-        slidesPerView={1}
-        onSlideChange={() => console.log("slide change")}
-        onSwiper={(swiper) => console.log(swiper)}
-      >
-        <SwiperSlide>
-          <img className="mx-auto" src={images[0].link} alt="" />
-        </SwiperSlide>
-        <SwiperSlide>
-          <img className="mx-auto" src={images[1].link} alt="" />
-        </SwiperSlide>
-        <SwiperSlide>
-          <img className="mx-auto" src={images[2].link} alt="" />
-        </SwiperSlide>
+      <Swiper spaceBetween={50} slidesPerView={1}>
+        {images.map((image, index) => (
+          <SwiperSlide key={index}>
+            <div className="relative py-8">
+              {/* Resim ve içeriği konumlandırmak için */}
+              <img className="m-auto rounded-xl" src={image.link} alt="" />
+              <div className="absolute top-0 left-0 w-full h-full flex flex-col px-20 py-10 items-center gap-20 text-center text-white">
+                {/* İçeriği ortala ve beyaz yap */}
+                <h2 className="text-2xl font-bold mb-4">{image.title}</h2>
+                {/* Başlığı biraz daha büyük ve kalın yap */}
+                <p className="text-lg text-center max-w-70 mb-6">{image.description}</p>
+                {/* Açıklamayı biraz daha büyük yap */}
+                <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                  {image.buttonText}
+                </button>
+                {/* Butonu stilize et */}
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
       </Swiper>
     </>
   );
