@@ -1,8 +1,6 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 
-
-
 const images = [
   {
     title: "Başlık 1",
@@ -37,7 +35,9 @@ function Slider() {
                 {/* İçeriği ortala ve beyaz yap */}
                 <h2 className="text-2xl font-bold mb-4">{image.title}</h2>
                 {/* Başlığı biraz daha büyük ve kalın yap */}
-                <p className="text-lg text-center max-w-70 mb-6">{image.description}</p>
+                <p className="text-lg text-center max-w-70 mb-6">
+                  {image.description}
+                </p>
                 {/* Açıklamayı biraz daha büyük yap */}
                 <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                   {image.buttonText}
@@ -48,7 +48,6 @@ function Slider() {
           </SwiperSlide>
         ))}
       </Swiper>
-      
     </>
   );
 }
