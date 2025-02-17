@@ -23,18 +23,18 @@ const veri = [
 
 function PracticeAdvice() {
   return (
-    <>
+    <div className="container mx-auto max-w-7xl">
       <div className="flex flex-col gap-5 py-10">
         <p className="text-center text-sky-500">Practice Advice</p>
         <h1 className="text-2xl font-bold text-center">Featured Posts</h1>
       </div>
 
-      <div className="flex flex-col items-center gap-12 xl:flex-row xl:justify-center xl:space-x-4">
+      <div className="flex flex-col items-center gap-10 px-4 md:px-0 xl:flex-row xl:justify-center xl:space-x-4">
         {veri.map((kart, i) => {
           return <Cards key={i} kart={kart} />;
         })}
       </div>
-    </>
+    </div>
   );
 }
 
