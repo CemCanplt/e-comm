@@ -71,6 +71,8 @@ function Cards({ kart }) {
         </div>
       </div>
 
+      {/* Deneme */}
+
       {/* İçerik */}
       <div className="p-6 xl:w-1/2">
         <div className="flex items-center justify-between mb-4">
