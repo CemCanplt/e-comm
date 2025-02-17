@@ -23,7 +23,7 @@ const links = [
 
 function ShoppingLinks() {
   return (
-    <div className="flex flex-col items-center py-10 justify-center gap-10">
+    <div className="flex flex-col md:flex-row items-center py-10 justify-center gap-10">
       {links.map((link, index) => (
         <a key={index} href={link.link}>
           <img

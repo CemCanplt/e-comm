@@ -1,5 +1,7 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
+import { Navigation } from "swiper/modules";
+import "swiper/css/navigation";
 
 const images = [
   {
@@ -25,7 +27,19 @@ const images = [
 function Slider() {
   return (
     <>
-      <Swiper spaceBetween={50} slidesPerView={1}>
+      <Swiper
+        spaceBetween={50}
+        slidesPerView={1}
+        navigation={{
+          enabled: true,
+        }}
+        modules={[Navigation]}
+        className="mySwiper md:px-4"
+        style={{
+          "--swiper-navigation-color": "white",
+          "--swiper-navigation-size": "30px",
+        }}
+      >
         {images.map((image, index) => (
           <SwiperSlide key={index}>
             <div className="relative py-8">

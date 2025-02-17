@@ -29,7 +29,7 @@ function PracticeAdvice() {
         <h1 className="text-2xl font-bold text-center">Featured Posts</h1>
       </div>
 
-      <div className="flex flex-col items-center gap-12">
+      <div className="flex flex-col items-center gap-12 xl:flex-row xl:justify-center xl:space-x-4">
         {veri.map((kart, i) => {
           return <Cards key={i} kart={kart} />;
         })}

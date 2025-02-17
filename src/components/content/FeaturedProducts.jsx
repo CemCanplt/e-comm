@@ -19,14 +19,15 @@ const nitelikler = [
 
 function FeaturedProducts() {
   return (
-    <div className="flex font-(--Bandage-Fontu) flex-col gap-15 px-10 py-10">
+    <div className="flex font-(--Bandage-Fontu) md:items-center md:text-center md: flex-col gap-10 px-10 py-10 md:px-20">
       <p className="text-sky-500">Featured Products</p>
       <h1 className="text-2xl font-bold">We love what we do</h1>
       <p className="text-(--ikinci-metin-rengi)">
         Problems trying to resolve the conflict between the two major realms of
-        Classical physics: Newtonian mechanics Problems trying to resolve the
-        conflict between the two major realms of Classical physics: Newtonian
-        mechanics.
+        Classical physics: Newtonian mechanics.
+        <br />
+        Problems trying to resolve the conflict between the two major realms of
+        Classical physics: Newtonian mechanics.
       </p>
       <div className="flex flex-row justify-center gap-2">
         <img src="https://placehold.co/158x363/green/FFF" alt="" />
@@ -43,10 +44,13 @@ function FeaturedProducts() {
         </p>
       </div>
 
-      <div className="flex flex-col justify-center items-center gap-20">
+      <div className="flex flex-col md:flex-row items-center md:justify-start md:items-start gap-20 md:py-10 md:">
         {nitelikler.map((nitelik, i) => {
           return (
-            <div key={i} className="flex flex-col items-center gap-5">
+            <div
+              key={i}
+              className="flex flex-col items-center justify-center max-w-72 gap-5 "
+            >
               <img src={nitelik.logo} alt="" />
               <h2 className="text-xl font-bold">{nitelik.title}</h2>
               <p className="text-center text-(--ikinci-metin-rengi)">
