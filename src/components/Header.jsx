@@ -1,24 +1,33 @@
 import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useLocalStorage("isLoggedIn", false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
   };
 
   return (
     <>
       <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center justify-between">
         {/* Sol Taraftaki Logo */}
-        <h1 className="text-xl font-bold text-[#252B42]">Bandage</h1>
+        <Link to="/" className="text-xl font-bold text-[#252B42]">
+          Bandage
+        </Link>
 
         {/* Orta Taraftaki Navigasyon (Geniş Ekranlar İçin) */}
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+          <Link to="/" className="text-[#737373] hover:text-[#252B42]">
             Home
-          </a>
+          </Link>
           <a href="#" className="text-[#737373] hover:text-[#252B42]">
             Product
           </a>
@@ -32,7 +41,21 @@ function Header() {
 
         {/* Sağ Taraftaki İkonlar */}
         <div className="flex items-center space-x-4">
-          <User className="cursor-pointer text-gray-600 hover:text-gray-900" />
+          {isLoggedIn ? (
+            <>
+              <button
+                onClick={handleLogout}
+                className="text-[#737373] hover:text-[#252B42]"
+              >
+                Log Out
+              </button>
+              <User className="cursor-pointer text-gray-600 hover:text-gray-900" />
+            </>
+          ) : (
+            <Link to="/signup" className="text-[#737373] hover:text-[#252B42]">
+              Sign Up
+            </Link>
+          )}
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
 
@@ -59,41 +82,36 @@ function Header() {
       >
         <ul className="py-2 flex flex-col space-y-4">
           <li>
-            <a
-              href="#"
+            <Link
+              to="/"
               className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
               onClick={toggleMenu}
             >
               Home
-            </a>
+            </Link>
           </li>
-          <li>
-            <a
-              href="#"
-              className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
-              onClick={toggleMenu}
-            >
-              Product
-            </a>
-          </li>
-          <li>
-            <a
-              href="#"
-              className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
-              onClick={toggleMenu}
-            >
-              Pricing
-            </a>
-          </li>
-          <li>
-            <a
-              href="#"
-              className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
-              onClick={toggleMenu}
-            >
-              Contact
-            </a>
-          </li>
+          {isLoggedIn ? null : (
+            <li>
+              <Link
+                to="/signup"
+                className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
+                onClick={toggleMenu}
+              >
+                Sign Up
+              </Link>
+            </li>
+          )}
+          {isLoggedIn ? (
+            <li>
+              <button
+                onClick={handleLogout}
+                className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
+                onClick={toggleMenu}
+              >
+                Log Out
+              </button>
+            </li>
+          ) : null}
         </ul>
       </nav>
     </>
