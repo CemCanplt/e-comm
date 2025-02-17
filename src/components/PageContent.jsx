@@ -1,6 +1,7 @@
 import BestSellerProducts from "./content/BestSellerProducts";
 import ExploringCards from "./content/ExploringCards";
 import FeaturedProducts from "./content/FeaturedProducts";
+import PracticeAdvice from "./content/PracticeAdvice";
 import ShoppingLinks from "./content/ShoppingLinks";
 import Slider from "./content/Slider";
 
@@ -12,6 +13,7 @@ function PageContent() {
       <ExploringCards />
       <BestSellerProducts />
       <FeaturedProducts />
+      <PracticeAdvice />
     </>
   );
 }
