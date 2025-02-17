@@ -4,6 +4,7 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import PageContent from "./components/PageContent";
 import SignUp from "./components/SignUp";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/signup" component={SignUp} />
       </Switch>
       <Footer />
+      <ToastContainer />
     </Router>
   );
 }

@@ -30,30 +30,44 @@ function SignUp() {
     },
   });
 
-  const { sendRequest } = useAxios({ baseURL: "YOUR_API_BASE_URL" }); // Set your base URL here
+  const { sendRequest } = useAxios({
+    baseURL: "https://workintech-fe-ecommerce.onrender.com",
+  });
 
   useEffect(() => {
-    // setLoadingRoles(true); // Artık backend'den veri çekmiyoruz
-    // sendRequest({
-    //   url: "/roles",
-    //   method: METHODS.GET,
-    //   callbackSuccess: (data) => {
-    //     setRoles(data);
-    //     setLoadingRoles(false);
-    //   },
-    //   callbackError: (error) => {
-    //     console.error("Failed to fetch roles:", error);
-    //     setLoadingRoles(false);
-    //   },
-    // });
-  }, []); // sendRequest'i dependency array'den çıkardık
+    setLoadingRoles(true);
+    sendRequest({
+      url: "/roles",
+      method: METHODS.GET,
+      callbackSuccess: (data) => {
+        setRoles(data);
+        setLoadingRoles(false);
+      },
+      callbackError: (error) => {
+        console.error("Failed to fetch roles:", error);
+        toast.error("Failed to fetch roles. Please try again later.", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+        setLoadingRoles(false);
+      },
+    });
+  }, [sendRequest]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
       const signupData = isStore
         ? {
-            ...data,
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            role_id: Number(data.role_id),
             store: {
               name: data.store_name,
               phone: data.store_phone,
@@ -61,7 +75,12 @@ function SignUp() {
               bank_account: data.store_bank_account,
             },
           }
-        : data;
+        : {
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            role_id: Number(data.role_id),
+          };
 
       await sendRequest({
         url: "/signup",
@@ -84,7 +103,7 @@ function SignUp() {
           history.goBack();
         },
         callbackError: (error) => {
-          toast.error(error, {
+          toast.error(error?.response?.data?.message || "Signup failed", {
             position: "top-center",
             autoClose: 5000,
             hideProgressBar: false,
@@ -100,6 +119,10 @@ function SignUp() {
       });
     } catch (error) {
       console.error("Signup failed:", error);
+      toast.error("An unexpected error occurred", {
+        position: "top-center",
+        autoClose: 5000,
+      });
       setIsSubmitting(false);
     }
   };
@@ -108,10 +131,6 @@ function SignUp() {
   useEffect(() => {
     setIsStore(Number(selectedRole) === 2); // Assuming role_id 2 is for store
   }, [selectedRole]);
-
-  // if (loadingRoles) { // Artık loading yok
-  //   return <div>Loading roles...</div>;
-  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -361,7 +380,7 @@ function SignUp() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-(--ilk-renk) hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--ilk-renk)] hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               {isSubmitting ? (
                 <svg
