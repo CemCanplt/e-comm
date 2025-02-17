@@ -14,6 +14,22 @@ function Header() {
         {/* Sol Taraftaki Logo */}
         <h1 className="text-xl font-bold text-[#252B42]">Bandage</h1>
 
+        {/* Orta Taraftaki Navigasyon (Geniş Ekranlar İçin) */}
+        <nav className="hidden md:flex items-center space-x-6">
+          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+            Home
+          </a>
+          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+            Product
+          </a>
+          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+            Pricing
+          </a>
+          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+            Contact
+          </a>
+        </nav>
+
         {/* Sağ Taraftaki İkonlar */}
         <div className="flex items-center space-x-4">
           <User className="cursor-pointer text-gray-600 hover:text-gray-900" />
@@ -21,16 +37,15 @@ function Header() {
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
 
           {/* Hamburger Menü Butonu */}
-
           {isOpen ? (
             <X
               onClick={toggleMenu}
-              className="md:hidden focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900"
+              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
             />
           ) : (
             <Menu
               onClick={toggleMenu}
-              className="md:hidden focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900"
+              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
             />
           )}
         </div>
