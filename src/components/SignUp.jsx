@@ -7,16 +7,16 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function SignUp() {
-  const [roles, setRoles] = useState([
-    { id: 1, name: "Customer" },
-    { id: 2, name: "Store" },
-    { id: 3, name: "Admin" },
-  ]);
-  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [roles, setRoles] = useState([]);
   const [isStore, setIsStore] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const history = useHistory();
   const [isLoggedIn, setIsLoggedIn] = useLocalStorage("isLoggedIn", false);
+
+  const { sendRequest, loading } = useAxios({
+    baseURL: "https://workintech-fe-ecommerce.onrender.com",
+    consoleLog: true,
+  });
 
   const {
     register,
@@ -26,22 +26,16 @@ function SignUp() {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      role_id: 1, // Customer should be selected by default
+      role_id: 3, // roleId -> role_id
     },
   });
 
-  const { sendRequest } = useAxios({
-    baseURL: "https://workintech-fe-ecommerce.onrender.com",
-  });
-
   useEffect(() => {
-    setLoadingRoles(true);
     sendRequest({
       url: "/roles",
       method: METHODS.GET,
       callbackSuccess: (data) => {
         setRoles(data);
-        setLoadingRoles(false);
       },
       callbackError: (error) => {
         console.error("Failed to fetch roles:", error);
@@ -54,7 +48,6 @@ function SignUp() {
           draggable: true,
           progress: undefined,
         });
-        setLoadingRoles(false);
       },
     });
   }, [sendRequest]);
@@ -67,7 +60,7 @@ function SignUp() {
             name: data.name,
             email: data.email,
             password: data.password,
-            role_id: Number(data.role_id),
+            role_id: Number(data.role_id), // roleId -> role_id
             store: {
               name: data.store_name,
               phone: data.store_phone,
@@ -79,14 +72,16 @@ function SignUp() {
             name: data.name,
             email: data.email,
             password: data.password,
-            role_id: Number(data.role_id),
+            role_id: Number(data.role_id), // roleId -> role_id
           };
 
       await sendRequest({
         url: "/signup",
         method: METHODS.POST,
         data: signupData,
-        callbackSuccess: () => {
+        callbackSuccess: (responseData) => {
+          console.log("Signup Response Data:", responseData);
+
           toast.warn(
             "You need to click the link in your email to activate your account!",
             {
@@ -103,15 +98,42 @@ function SignUp() {
           history.goBack();
         },
         callbackError: (error) => {
-          toast.error(error?.response?.data?.message || "Signup failed", {
-            position: "top-center",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
+          console.error("Signup Error:", error?.response?.data); // Gelen hatayı logla
+
+          // SQLite constraint hatası kontrolü (mail zaten kayıtlı)
+          const errorData = error?.response?.data;
+
+          if (
+            errorData?.err?.errno === 19 &&
+            errorData?.err?.code === "SQLITE_CONSTRAINT"
+          ) {
+            toast.error(
+              "This email is already registered. Please try with a different email address.",
+              {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+              }
+            );
+          } else {
+            // Diğer hata durumları için genel mesaj
+            toast.error(
+              errorData?.error || errorData?.message || "Signup failed",
+              {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+              }
+            );
+          }
         },
         alwaysApply: () => {
           setIsSubmitting(false);
@@ -127,10 +149,18 @@ function SignUp() {
     }
   };
 
-  const selectedRole = watch("role_id");
+  const selectedRole = watch("role_id"); // roleId -> role_id
   useEffect(() => {
-    setIsStore(Number(selectedRole) === 2); // Assuming role_id 2 is for store
+    setIsStore(Number(selectedRole) === 2);
   }, [selectedRole]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -186,6 +216,19 @@ function SignUp() {
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                     message: "Invalid email address",
+                  },
+                  validate: async (value) => {
+                    try {
+                      const response = await fetch(
+                        `${baseURL}/check-email?email=${value}`
+                      );
+                      const data = await response.json();
+                      return (
+                        data.available || "This email is already registered"
+                      );
+                    } catch (error) {
+                      return true;
+                    }
                   },
                 })}
                 className={`appearance-none rounded relative block w-full px-3 py-2 border ${
@@ -260,7 +303,7 @@ function SignUp() {
               </label>
               <select
                 id="role_id"
-                {...register("role_id")}
+                {...register("role_id")} // roleId -> role_id
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               >
                 {roles.map((role) => (

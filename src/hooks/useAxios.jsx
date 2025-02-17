@@ -13,22 +13,29 @@ export default function useAxios({
   initialData = null,
   baseURL = "",
   timeout = 5000,
+  consoleLog = false,
 }) {
   const [data, setData] = useState(initialData);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  // Instance'ı useRef ile saklayarak gereksiz yeniden oluşturmayı engelleyelim
   const instanceRef = useRef(null);
   const history = useHistory();
 
-  // Instance'ı sadece bir kere oluşturalım
+  // Instance oluşturma logging'i
   useEffect(() => {
     instanceRef.current = axios.create({
       baseURL,
       timeout,
     });
-  }, [baseURL, timeout]);
+
+    if (consoleLog) {
+      console.log("🔧 Axios Instance Created:", {
+        baseURL,
+        timeout,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [baseURL, timeout, consoleLog]);
 
   const sendRequest = useCallback(
     async ({
@@ -40,8 +47,19 @@ export default function useAxios({
       callbackError = null,
       alwaysApply = null,
     }) => {
-      // İstek iptal edilebilsin
       const controller = new AbortController();
+      const requestInfo = {
+        timestamp: new Date().toISOString(),
+        url: `${baseURL}${url}`,
+        method: method.toUpperCase(),
+        requestData: data,
+        redirect: redirect || "No redirect specified",
+      };
+
+      if (consoleLog) {
+        console.group("🔄 API Request Lifecycle");
+        console.log("Request Details:", requestInfo);
+      }
 
       try {
         setLoading(true);
@@ -51,10 +69,24 @@ export default function useAxios({
           signal: controller.signal,
         });
 
-        // Component unmount olduysa işlemi iptal edelim
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          if (consoleLog) {
+            console.log("Request Status: Aborted (Component unmounted)");
+            console.groupEnd();
+          }
+          return;
+        }
 
         setData(response.data);
+
+        if (consoleLog) {
+          console.log("Response Details:", {
+            status: response.status,
+            statusText: response.statusText,
+            data: response.data,
+            timestamp: new Date().toISOString(),
+          });
+        }
 
         if (callbackSuccess) {
           await callbackSuccess(response.data);
@@ -66,16 +98,29 @@ export default function useAxios({
 
         return response.data;
       } catch (error) {
-        // Eğer istek iptal edildiyse hata göstermeyelim
         if (axios.isCancel(error)) {
+          if (consoleLog) {
+            console.log("Request Status: Cancelled");
+            console.groupEnd();
+          }
           return;
         }
 
         const errorMessage = error.response?.data?.message || error.message;
 
-        // Component unmount olduysa hata state'ini güncellemeyelim
         if (!controller.signal.aborted) {
           setError(errorMessage);
+        }
+
+        if (consoleLog) {
+          console.log("Error Details:", {
+            message: errorMessage,
+            sqliteError: error?.err,
+            fullError: error,
+            responseData: error.response?.data,
+            status: error.response?.status,
+            timestamp: new Date().toISOString(),
+          });
         }
 
         if (callbackError) {
@@ -84,7 +129,6 @@ export default function useAxios({
 
         throw error;
       } finally {
-        // Component unmount olduysa loading state'ini güncellemeyelim
         if (!controller.signal.aborted) {
           setLoading(false);
         }
@@ -92,16 +136,22 @@ export default function useAxios({
         if (alwaysApply) {
           await alwaysApply();
         }
+
+        if (consoleLog) {
+          console.log("Request Status: Completed");
+          console.groupEnd();
+        }
       }
     },
-    [history]
+    [history, baseURL, consoleLog]
   );
 
-  // Component unmount olduğunda tüm istekleri temizleyelim
   useEffect(() => {
     return () => {
       if (instanceRef.current) {
-        // Tüm aktif istekleri iptal et
+        if (consoleLog) {
+          console.log("🧹 Cleaning up active requests");
+        }
         instanceRef.current.interceptors.request.use((config) => {
           if (config.signal) {
             config.signal.abort();
@@ -110,7 +160,7 @@ export default function useAxios({
         });
       }
     };
-  }, []);
+  }, [consoleLog]);
 
   return {
     data,
