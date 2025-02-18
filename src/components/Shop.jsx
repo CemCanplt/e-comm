@@ -133,18 +133,34 @@ function Shop() {
                     max={priceRange.max}
                   />
                 </div>
-                <input
-                  type="range"
-                  min={priceRange.min}
-                  max={priceRange.max}
-                  value={priceValues[1]}
-                  onChange={(e) =>
-                    handlePriceRangeChange({
-                      target: { name: "max", value: e.target.value },
-                    })
-                  }
-                  className="w-full"
-                />
+                <div className="space-y-2">
+                  {/* Min price range */}
+                  <input
+                    type="range"
+                    min={priceRange.min}
+                    max={priceRange.max}
+                    value={priceValues[0]}
+                    onChange={(e) =>
+                      handlePriceRangeChange({
+                        target: { name: "min", value: e.target.value },
+                      })
+                    }
+                    className="w-full"
+                  />
+                  {/* Max price range */}
+                  <input
+                    type="range"
+                    min={priceRange.min}
+                    max={priceRange.max}
+                    value={priceValues[1]}
+                    onChange={(e) =>
+                      handlePriceRangeChange({
+                        target: { name: "max", value: e.target.value },
+                      })
+                    }
+                    className="w-full"
+                  />
+                </div>
               </div>
             </div>
           </div>
