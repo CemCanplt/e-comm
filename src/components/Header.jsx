@@ -2,10 +2,14 @@ import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import useLocalStorage from "../hooks/useLocalStorage";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../store/userSlice";
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useLocalStorage("isLoggedIn", false);
+  const dispatch = useDispatch();
+  const { user, isAuthenticated } = useSelector((state) => state.user);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -13,6 +17,7 @@ function Header() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    dispatch(logout());
   };
 
   return (
@@ -41,20 +46,37 @@ function Header() {
 
         {/* Sağ Taraftaki İkonlar */}
         <div className="flex items-center space-x-4">
-          {isLoggedIn ? (
-            <>
-              <button
-                onClick={handleLogout}
-                className="text-[#737373] hover:text-[#252B42]"
-              >
-                Log Out
-              </button>
-              <User className="cursor-pointer text-gray-600 hover:text-gray-900" />
-            </>
+          {isAuthenticated && user ? (
+            <div className="flex items-center space-x-3">
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-8 w-8 rounded-full"
+              />
+              <span className="text-gray-700">{user.name}</span>
+              <button onClick={handleLogout}>Logout</button>
+            </div>
           ) : (
-            <Link to="/signup" className="text-[#737373] hover:text-[#252B42]">
-              Sign Up
-            </Link>
+            <>
+              {isLoggedIn ? (
+                <>
+                  <button
+                    onClick={handleLogout}
+                    className="text-[#737373] hover:text-[#252B42]"
+                  >
+                    Log Out
+                  </button>
+                  <User className="cursor-pointer text-gray-600 hover:text-gray-900" />
+                </>
+              ) : (
+                <Link
+                  to="/signup"
+                  className="text-[#737373] hover:text-[#252B42]"
+                >
+                  Sign Up
+                </Link>
+              )}
+            </>
           )}
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
