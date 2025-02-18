@@ -177,9 +177,9 @@ function Header() {
           <Link to="/" className="text-[#737373] hover:text-[#252B42]">
             Home
           </Link>
-          <a href="#" className="text-[#737373] hover:text-[#252B42]">
-            Product
-          </a>
+          <Link to="/shop" className="text-[#737373] hover:text-[#252B42]">
+            Shop
+          </Link>
           <a href="#" className="text-[#737373] hover:text-[#252B42]">
             Pricing
           </a>
