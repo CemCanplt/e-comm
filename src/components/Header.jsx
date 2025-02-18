@@ -13,25 +13,30 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/reducers/userReducer";
 
 function Header() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // State management
+  const [isOpen, setIsOpen] = useState(false); // Mobile menu state
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // User dropdown state
+  const [authTitle, setAuthTitle] = useState("Login"); // Auth button text
+  const [showAuthMenu, setShowAuthMenu] = useState(false); // Auth menu visibility
+
+  // Refs for click outside detection
   const dropdownRef = useRef(null);
+  const authMenuRef = useRef(null);
+
+  // Redux hooks
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.user);
-  const [authTitle, setAuthTitle] = useState("Login"); // Değişen başlık için
-  const [showAuthMenu, setShowAuthMenu] = useState(false); // Hover menüsü için
-  const authMenuRef = useRef(null); // Menü referansı için
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
+  // Toggle mobile menu
+  const toggleMenu = () => setIsOpen(!isOpen);
 
+  // Handle user logout
   const handleLogout = () => {
     dispatch(logout());
     setIsDropdownOpen(false);
   };
 
-  // Dropdown dışına tıklandığında kapanması için
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -43,7 +48,7 @@ function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Otomatik değişen başlık için effect
+  // Auto-changing auth title animation
   useEffect(() => {
     if (!isAuthenticated) {
       const interval = setInterval(() => {
@@ -53,7 +58,7 @@ function Header() {
     }
   }, [isAuthenticated]);
 
-  // Hover menüsü için click-outside handler
+  // Close auth menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (authMenuRef.current && !authMenuRef.current.contains(event.target)) {
@@ -65,73 +70,70 @@ function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Auth menüsünü gösteren/gizleyen fonksiyon
-  const toggleAuthMenu = () => {
-    setShowAuthMenu(!showAuthMenu);
-  };
+  // Render authenticated user section
+  const renderAuthenticatedSection = () => (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className="flex items-center space-x-2 focus:outline-none"
+      >
+        {user?.avatar ? (
+          <img
+            src={user.avatar}
+            alt={user.name}
+            className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
+            hover:ring-blue-500 transition-all duration-200"
+          />
+        ) : (
+          <User className="h-8 w-8 p-1 rounded-full bg-gray-100" />
+        )}
+        <span className="text-gray-700 hidden md:block">{user?.name}</span>
+      </button>
 
-  // Login/Signup bölümünü güncelleyelim
+      {/* User Dropdown Menu */}
+      {isDropdownOpen && (
+        <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-50">
+          <div className="px-4 py-2 border-b">
+            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+            <p className="text-sm text-gray-500">{user?.email}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
+            hover:bg-gray-100 space-x-2"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign out</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  // Render non-authenticated section
   const renderAuthSection = () => {
     if (isAuthenticated) {
-      return (
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center space-x-2 focus:outline-none"
-          >
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
-                hover:ring-blue-500 transition-all duration-200"
-              />
-            ) : (
-              <User className="h-8 w-8 p-1 rounded-full bg-gray-100" />
-            )}
-            <span className="text-gray-700 hidden md:block">{user?.name}</span>
-          </button>
-
-          {/* Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-50">
-              <div className="px-4 py-2 border-b">
-                <p className="text-sm font-medium text-gray-900">
-                  {user?.name}
-                </p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
-                hover:bg-gray-100 space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sign out</span>
-              </button>
-            </div>
-          )}
-        </div>
-      );
+      return renderAuthenticatedSection();
     }
 
     return (
       <div
-        className="relative w-24" // Sabit genişlik ekledik
+        className="relative w-24"
         ref={authMenuRef}
         onMouseEnter={() => setShowAuthMenu(true)}
         onMouseLeave={() => setShowAuthMenu(false)}
       >
+        {/* Auth Button */}
         <button
-          className="flex items-center justify-center gap-2 w-full text-[#737373] hover:text-[#252B42] 
-          transition-colors duration-200"
-          onClick={toggleAuthMenu}
+          className="flex items-center justify-center gap-2 w-full text-[#737373] 
+          hover:text-[#252B42] transition-colors duration-200"
+          onClick={() => setShowAuthMenu(!showAuthMenu)}
         >
           <span className="text-right font-medium">{authTitle}</span>
           <ChevronDown className="h-4 w-4" />
         </button>
 
-        {/* Dropdown Menu */}
+        {/* Auth Dropdown Menu */}
         <div
           className={`absolute right-0 mt-2 py-1 w-48 bg-white rounded-lg shadow-xl z-50 
           transform transition-all duration-200 ${
@@ -139,8 +141,6 @@ function Header() {
               ? "opacity-100 translate-y-0 visible"
               : "opacity-0 -translate-y-2 invisible"
           }`}
-          onMouseEnter={() => setShowAuthMenu(true)}
-          onMouseLeave={() => setShowAuthMenu(false)}
         >
           <Link
             to="/login"
@@ -165,11 +165,14 @@ function Header() {
 
   return (
     <>
+      {/* Main Header */}
       <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center justify-between">
+        {/* Logo */}
         <Link to="/" className="text-xl font-bold text-[#252B42]">
           Bandage
         </Link>
 
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
           <Link to="/" className="text-[#737373] hover:text-[#252B42]">
             Home
@@ -185,28 +188,31 @@ function Header() {
           </a>
         </nav>
 
+        {/* Right Section: Auth, Search, Cart, Mobile Menu */}
         <div className="flex items-center space-x-4">
           {renderAuthSection()}
 
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Toggle */}
           {isOpen ? (
             <X
               onClick={toggleMenu}
-              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
+              className="focus:outline-none cursor-pointer text-gray-600 
+              hover:text-gray-900 md:hidden"
             />
           ) : (
             <Menu
               onClick={toggleMenu}
-              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
+              className="focus:outline-none cursor-pointer text-gray-600 
+              hover:text-gray-900 md:hidden"
             />
           )}
         </div>
       </header>
 
-      {/* Mobile Menu */}
+      {/* Mobile Navigation Menu */}
       <nav
         className={`${
           isOpen ? "block" : "hidden"
@@ -216,7 +222,8 @@ function Header() {
           <li>
             <Link
               to="/"
-              className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
+              className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+              hover:bg-gray-100"
               onClick={toggleMenu}
             >
               Home
@@ -227,7 +234,8 @@ function Header() {
               <li>
                 <Link
                   to="/login"
-                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
+                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+                  hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
                   Login
@@ -236,7 +244,8 @@ function Header() {
               <li>
                 <Link
                   to="/signup"
-                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
+                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+                  hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
                   Sign Up
