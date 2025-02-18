@@ -5,6 +5,7 @@ import {
   setToken,
   setLoading,
   setError,
+  setRoles, // Import setRoles
 } from "../reducers/userReducer";
 
 export const loginUser = ({ email, password, rememberMe }) => {
@@ -43,4 +44,18 @@ export const loginUser = ({ email, password, rememberMe }) => {
   };
 };
 
-// Diğer user actions'ları buraya eklenebilir
+export const fetchRoles = () => {
+  return async (dispatch) => {
+    dispatch(setLoading(true));
+    try {
+      const response = await axios.get(
+        "https://workintech-fe-ecommerce.onrender.com/roles"
+      );
+      dispatch(setRoles(response.data));
+    } catch (error) {
+      dispatch(setError("Failed to fetch roles"));
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+};
