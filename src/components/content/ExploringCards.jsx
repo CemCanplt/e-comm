@@ -23,27 +23,31 @@ const exploringCards = [
 
 function ExploringCards() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 bg-gray-100 p-8">
-      {exploringCards.map((card, index) => (
-        <div key={index} className="relative group overflow-hidden rounded-lg">
-          <img
-            src={card.background}
-            alt={card.title}
-            className="w-full h-[556px] object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 flex flex-col items-center justify-end p-6 bg-gradient-to-t from-blue-500/70 to-transparent">
-            <h2 className="text-white text-xl font-semibold mb-2">
-              {card.title}
-            </h2>
-            <button
-              className="bg-transparent border-2 border-white text-white py-2 px-6 rounded-full 
-              hover:bg-white hover:text-black transition duration-300 transform hover:-translate-y-1"
-            >
-              {card.buttonText}
-            </button>
+    <div className="max-w-7xl mx-auto px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
+        {exploringCards.map((card, index) => (
+          <div
+            key={index}
+            className="relative group overflow-hidden rounded-lg"
+          >
+            <div className="aspect-w-1 aspect-h-1">
+              <img
+                src={card.background}
+                alt={card.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-end p-6 bg-gradient-to-t from-blue-500/70 to-transparent">
+              <h2 className="text-white text-xl font-semibold mb-2">
+                {card.title}
+              </h2>
+              <button className="bg-transparent border-2 border-white text-white py-2 px-6 rounded-full hover:bg-white hover:text-black transition duration-300">
+                {card.buttonText}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
