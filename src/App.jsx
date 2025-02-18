@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import PageContent from "./components/PageContent";
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
+import Shop from "./components/Shop";
 import { ToastContainer } from "react-toastify";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route exact path="/" component={PageContent} />
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
+          <Route path="/shop" component={Shop} />
         </Switch>
       </main>
       <Footer />
@@ -25,4 +27,3 @@ function App() {
 }
 
 export default App;
-

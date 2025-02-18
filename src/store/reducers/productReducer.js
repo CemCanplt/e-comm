@@ -5,6 +5,12 @@ const initialState = {
   limit: 25,
   offset: 0,
   filter: "",
+  sortBy: "featured",
+  priceRange: {
+    min: 0,
+    max: 1000,
+    current: [0, 1000],
+  },
   fetchState: "NOT_FETCHED", // "NOT_FETCHED" , "FETCHING", "FETCHED", "FAILED"
 };
 
@@ -17,6 +23,9 @@ export const PRODUCT_ACTIONS = {
   SET_LIMIT: "SET_LIMIT",
   SET_OFFSET: "SET_OFFSET",
   SET_FILTER: "SET_FILTER",
+  SET_SORT_BY: "SET_SORT_BY",
+  SET_PRICE_RANGE: "SET_PRICE_RANGE",
+  FILTER_PRODUCTS: "FILTER_PRODUCTS",
 };
 
 // Action Creators
@@ -55,6 +64,20 @@ export const setFilter = (filter) => ({
   payload: filter,
 });
 
+export const setSortBy = (sortType) => ({
+  type: PRODUCT_ACTIONS.SET_SORT_BY,
+  payload: sortType,
+});
+
+export const setPriceRange = (range) => ({
+  type: PRODUCT_ACTIONS.SET_PRICE_RANGE,
+  payload: range,
+});
+
+export const filterProducts = () => ({
+  type: PRODUCT_ACTIONS.FILTER_PRODUCTS,
+});
+
 // Reducer
 const productReducer = (state = initialState, action) => {
   switch (action.type) {
@@ -72,8 +95,50 @@ const productReducer = (state = initialState, action) => {
       return { ...state, offset: action.payload };
     case PRODUCT_ACTIONS.SET_FILTER:
       return { ...state, filter: action.payload };
+    case PRODUCT_ACTIONS.SET_SORT_BY:
+      return {
+        ...state,
+        sortBy: action.payload,
+        productList: sortProducts(state.productList, action.payload),
+      };
+    case PRODUCT_ACTIONS.SET_PRICE_RANGE:
+      return {
+        ...state,
+        priceRange: {
+          ...state.priceRange,
+          current: action.payload,
+        },
+      };
+    case PRODUCT_ACTIONS.FILTER_PRODUCTS:
+      const filteredList = state.productList.filter(
+        (product) =>
+          product.price >= state.priceRange.current[0] &&
+          product.price <= state.priceRange.current[1]
+      );
+      return {
+        ...state,
+        filteredProducts: filteredList,
+      };
     default:
       return state;
+  }
+};
+
+// Sorting helper function
+const sortProducts = (products, sortType) => {
+  const productsCopy = [...products];
+
+  switch (sortType) {
+    case "price-low":
+      return productsCopy.sort((a, b) => a.price - b.price);
+    case "price-high":
+      return productsCopy.sort((a, b) => b.price - a.price);
+    case "newest":
+      return productsCopy.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+    default: // featured
+      return productsCopy;
   }
 };
 
