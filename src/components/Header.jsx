@@ -1,13 +1,11 @@
 import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import useLocalStorage from "../hooks/useLocalStorage";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../store/userSlice";
+import { logout } from "../store/slices/userSlice";
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useLocalStorage("isLoggedIn", false);
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.user);
 
@@ -16,19 +14,16 @@ function Header() {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
     dispatch(logout());
   };
 
   return (
     <>
       <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center justify-between">
-        {/* Sol Taraftaki Logo */}
         <Link to="/" className="text-xl font-bold text-[#252B42]">
           Bandage
         </Link>
 
-        {/* Orta Taraftaki Navigasyon (Geniş Ekranlar İçin) */}
         <nav className="hidden md:flex items-center space-x-6">
           <Link to="/" className="text-[#737373] hover:text-[#252B42]">
             Home
@@ -44,44 +39,41 @@ function Header() {
           </a>
         </nav>
 
-        {/* Sağ Taraftaki İkonlar */}
         <div className="flex items-center space-x-4">
-          {isAuthenticated && user ? (
+          {isAuthenticated ? (
             <div className="flex items-center space-x-3">
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="h-8 w-8 rounded-full"
-              />
-              <span className="text-gray-700">{user.name}</span>
-              <button onClick={handleLogout}>Logout</button>
+              {user?.avatar && (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="h-8 w-8 rounded-full"
+                />
+              )}
+              <span className="text-gray-700">{user?.name}</span>
+              <button
+                onClick={handleLogout}
+                className="text-[#737373] hover:text-[#252B42]"
+              >
+                Logout
+              </button>
             </div>
           ) : (
             <>
-              {isLoggedIn ? (
-                <>
-                  <button
-                    onClick={handleLogout}
-                    className="text-[#737373] hover:text-[#252B42]"
-                  >
-                    Log Out
-                  </button>
-                  <User className="cursor-pointer text-gray-600 hover:text-gray-900" />
-                </>
-              ) : (
-                <Link
-                  to="/signup"
-                  className="text-[#737373] hover:text-[#252B42]"
-                >
-                  Sign Up
-                </Link>
-              )}
+              <Link to="/login" className="text-[#737373] hover:text-[#252B42]">
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="text-[#737373] hover:text-[#252B42]"
+              >
+                Sign Up
+              </Link>
             </>
           )}
+
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
 
-          {/* Hamburger Menü Butonu */}
           {isOpen ? (
             <X
               onClick={toggleMenu}
@@ -96,7 +88,6 @@ function Header() {
         </div>
       </header>
 
-      {/* Hamburger Menü İçeriği */}
       <nav
         className={`${
           isOpen ? "block" : "hidden"
@@ -112,28 +103,41 @@ function Header() {
               Home
             </Link>
           </li>
-          {isLoggedIn ? null : (
-            <li>
-              <Link
-                to="/signup"
-                className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
-                onClick={toggleMenu}
-              >
-                Sign Up
-              </Link>
-            </li>
+          {!isAuthenticated && (
+            <>
+              <li>
+                <Link
+                  to="/login"
+                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
+                  onClick={toggleMenu}
+                >
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/signup"
+                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
+                  onClick={toggleMenu}
+                >
+                  Sign Up
+                </Link>
+              </li>
+            </>
           )}
-          {isLoggedIn ? (
+          {isAuthenticated && (
             <li>
               <button
-                onClick={handleLogout}
-                className="block px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
-                onClick={toggleMenu}
+                onClick={() => {
+                  handleLogout();
+                  toggleMenu();
+                }}
+                className="block w-full px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
               >
-                Log Out
+                Logout
               </button>
             </li>
-          ) : null}
+          )}
         </ul>
       </nav>
     </>

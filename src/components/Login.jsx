@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { loginUser } from "../store/userActions";
+import { loginUser } from "../store/actions/userActions"; // Yeni path'i kullan
 
 function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);

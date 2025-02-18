@@ -1,56 +1,49 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useHistory } from "react-router-dom";
-import useLocalStorage from "../hooks/useLocalStorage";
-import useAxios, { METHODS } from "../hooks/useAxios";
+import { useDispatch } from "react-redux"; // Redux dispatch ekle
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios"; // Axios'u doğrudan import et
 
 function SignUp() {
   const [roles, setRoles] = useState([]);
   const [isStore, setIsStore] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const history = useHistory();
-  const [isLoggedIn, setIsLoggedIn] = useLocalStorage("isLoggedIn", false);
-
-  const { sendRequest, loading } = useAxios({
-    baseURL: "https://workintech-fe-ecommerce.onrender.com",
-    consoleLog: true,
-  });
+  const dispatch = useDispatch(); // Redux dispatch'i ekle
 
   const {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isValid, isDirty }, // isValid ve isDirty ekledik
+    formState: { errors, isValid, isDirty },
   } = useForm({
-    mode: "onChange", // mode'u onChange olarak değiştirdik
+    mode: "onChange",
     defaultValues: {
       role_id: 3,
     },
   });
 
   useEffect(() => {
-    sendRequest({
-      url: "/roles",
-      method: METHODS.GET,
-      callbackSuccess: (data) => {
-        setRoles(data);
-      },
-      callbackError: (error) => {
+    const fetchRoles = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(
+          "https://workintech-fe-ecommerce.onrender.com/roles"
+        );
+        setRoles(response.data);
+      } catch (error) {
         console.error("Failed to fetch roles:", error);
-        toast.error("Failed to fetch roles. Please try again later.", {
-          position: "top-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      },
-    });
-  }, [sendRequest]);
+        toast.error("Failed to fetch roles. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -60,7 +53,7 @@ function SignUp() {
             name: data.name,
             email: data.email,
             password: data.password,
-            role_id: Number(data.role_id), // roleId -> role_id
+            role_id: Number(data.role_id),
             store: {
               name: data.store_name,
               phone: data.store_phone,
@@ -72,79 +65,34 @@ function SignUp() {
             name: data.name,
             email: data.email,
             password: data.password,
-            role_id: Number(data.role_id), // roleId -> role_id
+            role_id: Number(data.role_id),
           };
 
-      await sendRequest({
-        url: "/signup",
-        method: METHODS.POST,
-        data: signupData,
-        callbackSuccess: (responseData) => {
-          console.log("Signup Response Data:", responseData);
+      const response = await axios.post(
+        "https://workintech-fe-ecommerce.onrender.com/signup",
+        signupData
+      );
 
-          toast.warn(
-            "You need to click the link in your email to activate your account!",
-            {
-              position: "top-center",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-            }
-          );
-          setIsLoggedIn(false);
-          history.goBack();
-        },
-        callbackError: (error) => {
-          console.error("Signup Error:", error?.response?.data); // Gelen hatayı logla
-
-          // SQLite constraint hatası kontrolü (mail zaten kayıtlı)
-          const errorData = error?.response?.data;
-
-          if (
-            errorData?.err?.errno === 19 &&
-            errorData?.err?.code === "SQLITE_CONSTRAINT"
-          ) {
-            toast.error(
-              "This email is already registered. Please try with a different email address.",
-              {
-                position: "top-center",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-              }
-            );
-          } else {
-            // Diğer hata durumları için genel mesaj
-            toast.error(
-              errorData?.error || errorData?.message || "Signup failed",
-              {
-                position: "top-center",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-              }
-            );
-          }
-        },
-        alwaysApply: () => {
-          setIsSubmitting(false);
-        },
-      });
+      if (response.data) {
+        toast.warn(
+          "You need to click the link in your email to activate your account!"
+        );
+        history.push("/login");
+      }
     } catch (error) {
-      console.error("Signup failed:", error);
-      toast.error("An unexpected error occurred", {
-        position: "top-center",
-        autoClose: 5000,
-      });
+      const errorData = error.response?.data;
+
+      if (
+        errorData?.err?.errno === 19 &&
+        errorData?.err?.code === "SQLITE_CONSTRAINT"
+      ) {
+        toast.error(
+          "This email is already registered. Please try with a different email address."
+        );
+      } else {
+        toast.error(errorData?.error || errorData?.message || "Signup failed");
+      }
+    } finally {
       setIsSubmitting(false);
     }
   };
