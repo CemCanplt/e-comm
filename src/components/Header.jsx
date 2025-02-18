@@ -1,4 +1,12 @@
-import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -10,6 +18,9 @@ function Header() {
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.user);
+  const [authTitle, setAuthTitle] = useState("Login"); // Değişen başlık için
+  const [showAuthMenu, setShowAuthMenu] = useState(false); // Hover menüsü için
+  const authMenuRef = useRef(null); // Menü referansı için
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -31,6 +42,124 @@ function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Otomatik değişen başlık için effect
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const interval = setInterval(() => {
+        setAuthTitle((prev) => (prev === "Login" ? "Sign Up" : "Login"));
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
+  // Hover menüsü için click-outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (authMenuRef.current && !authMenuRef.current.contains(event.target)) {
+        setShowAuthMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Auth menüsünü gösteren/gizleyen fonksiyon
+  const toggleAuthMenu = () => {
+    setShowAuthMenu(!showAuthMenu);
+  };
+
+  // Login/Signup bölümünü güncelleyelim
+  const renderAuthSection = () => {
+    if (isAuthenticated) {
+      return (
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center space-x-2 focus:outline-none"
+          >
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
+                hover:ring-blue-500 transition-all duration-200"
+              />
+            ) : (
+              <User className="h-8 w-8 p-1 rounded-full bg-gray-100" />
+            )}
+            <span className="text-gray-700 hidden md:block">{user?.name}</span>
+          </button>
+
+          {/* Dropdown Menu */}
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-50">
+              <div className="px-4 py-2 border-b">
+                <p className="text-sm font-medium text-gray-900">
+                  {user?.name}
+                </p>
+                <p className="text-sm text-gray-500">{user?.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
+                hover:bg-gray-100 space-x-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign out</span>
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className="relative"
+        ref={authMenuRef}
+        onMouseEnter={() => setShowAuthMenu(true)}
+        onMouseLeave={() => setShowAuthMenu(false)}
+      >
+        <button
+          className="flex items-center justify-center gap-2 w-24 text-[#737373] hover:text-[#252B42] 
+          transition-colors duration-200"
+          onClick={toggleAuthMenu}
+        >
+          <span className="text-right font-medium grow-1">{authTitle}</span>
+          <ChevronDown className="h-4 w-4 grow-0" />
+        </button>
+
+        {/* Dropdown Menu */}
+        <div
+          className={`absolute right-0 mt-2 py-1 w-48 bg-white rounded-lg shadow-xl z-50 
+          transform transition-all duration-200 ${
+            showAuthMenu
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 -translate-y-2 pointer-events-none"
+          }`}
+        >
+          <Link
+            to="/login"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
+            transition-colors duration-150"
+            onClick={() => setShowAuthMenu(false)}
+          >
+            Login
+          </Link>
+          <Link
+            to="/signup"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
+            transition-colors duration-150"
+            onClick={() => setShowAuthMenu(false)}
+          >
+            Sign Up
+          </Link>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -55,60 +184,7 @@ function Header() {
         </nav>
 
         <div className="flex items-center space-x-4">
-          {isAuthenticated ? (
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center space-x-2 focus:outline-none"
-              >
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
-                    hover:ring-blue-500 transition-all duration-200"
-                  />
-                ) : (
-                  <User className="h-8 w-8 p-1 rounded-full bg-gray-100" />
-                )}
-                <span className="text-gray-700 hidden md:block">
-                  {user?.name}
-                </span>
-              </button>
-
-              {/* Dropdown Menu */}
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-50">
-                  <div className="px-4 py-2 border-b">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user?.name}
-                    </p>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
-                    hover:bg-gray-100 space-x-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Sign out</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <Link to="/login" className="text-[#737373] hover:text-[#252B42]">
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className="text-[#737373] hover:text-[#252B42]"
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
+          {renderAuthSection()}
 
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
