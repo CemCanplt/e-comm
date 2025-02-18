@@ -117,18 +117,18 @@ function Header() {
 
     return (
       <div
-        className="relative"
+        className="relative w-24" // Sabit genişlik ekledik
         ref={authMenuRef}
         onMouseEnter={() => setShowAuthMenu(true)}
         onMouseLeave={() => setShowAuthMenu(false)}
       >
         <button
-          className="flex items-center justify-center gap-2 w-24 text-[#737373] hover:text-[#252B42] 
+          className="flex items-center justify-center gap-2 w-full text-[#737373] hover:text-[#252B42] 
           transition-colors duration-200"
           onClick={toggleAuthMenu}
         >
-          <span className="text-right font-medium grow-1">{authTitle}</span>
-          <ChevronDown className="h-4 w-4 grow-0" />
+          <span className="text-right font-medium">{authTitle}</span>
+          <ChevronDown className="h-4 w-4" />
         </button>
 
         {/* Dropdown Menu */}
@@ -136,9 +136,11 @@ function Header() {
           className={`absolute right-0 mt-2 py-1 w-48 bg-white rounded-lg shadow-xl z-50 
           transform transition-all duration-200 ${
             showAuthMenu
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 -translate-y-2 pointer-events-none"
+              ? "opacity-100 translate-y-0 visible"
+              : "opacity-0 -translate-y-2 invisible"
           }`}
+          onMouseEnter={() => setShowAuthMenu(true)}
+          onMouseLeave={() => setShowAuthMenu(false)}
         >
           <Link
             to="/login"
