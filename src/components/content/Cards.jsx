@@ -69,28 +69,42 @@ function Cards({ kart }) {
         <div className="space-y-4 py-4 border-t border-gray-100">
           {/* Renk Seçenekleri */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700">Colors</p>
-            <div className="flex items-center gap-2">
-              {["red", "blue", "green"].map((color) => (
-                <button
-                  key={color}
-                  className={`w-8 h-8 rounded-full bg-${color}-500 ring-2 ring-offset-2 
-                    ring-transparent hover:ring-${color}-500 transition-all`}
-                  aria-label={`Select ${color} color`}
-                />
-              ))}
+            <p className="text-sm font-medium text-gray-700">
+              Available Colors
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                className="w-6 h-6 rounded-full bg-[#23A6F0] ring-2 ring-offset-2 
+                  ring-transparent hover:ring-[#23A6F0] focus:ring-[#23A6F0] transition-all"
+                aria-label="Select blue color"
+              />
+              <button
+                className="w-6 h-6 rounded-full bg-[#2DC071] ring-2 ring-offset-2 
+                  ring-transparent hover:ring-[#2DC071] focus:ring-[#2DC071] transition-all"
+                aria-label="Select green color"
+              />
+              <button
+                className="w-6 h-6 rounded-full bg-[#E77C40] ring-2 ring-offset-2 
+                  ring-transparent hover:ring-[#E77C40] focus:ring-[#E77C40] transition-all"
+                aria-label="Select orange color"
+              />
+              <button
+                className="w-6 h-6 rounded-full bg-[#252B42] ring-2 ring-offset-2 
+                  ring-transparent hover:ring-[#252B42] focus:ring-[#252B42] transition-all"
+                aria-label="Select black color"
+              />
             </div>
           </div>
 
           {/* Boyut Seçenekleri */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700">Sizes</p>
+            <p className="text-sm font-medium text-gray-700">Select Size</p>
             <div className="flex items-center gap-2">
-              {["S", "M", "L"].map((size) => (
+              {["XS", "S", "M", "L", "XL"].map((size) => (
                 <button
                   key={size}
-                  className="min-w-[2.5rem] h-8 px-2 rounded bg-gray-100 text-sm font-medium 
-                    text-gray-700 hover:bg-gray-200 transition-colors"
+                  className="min-w-[2.5rem] h-8 px-2 rounded-lg bg-gray-100 text-sm font-medium 
+                    text-gray-700 hover:bg-gray-200 focus:bg-gray-200 transition-colors"
                 >
                   {size}
                 </button>
@@ -100,17 +114,19 @@ function Cards({ kart }) {
         </div>
 
         {/* Alt Bilgiler */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-gray-500">
+        <div className="flex flex-col space-y-4 pt-4 border-t border-gray-100">
+          {/* Tarih ve Yorum Bilgileri */}
+          <div className="flex items-center text-gray-500">
             <span className="text-sm">{kart.tarih}</span>
-            <span>•</span>
+            <span className="mx-2">•</span>
             <span className="text-sm">{kart.yorum} comments</span>
           </div>
 
+          {/* Learn More Butonu */}
           <button
-            className="px-6 py-2 text-sm font-medium text-white bg-indigo-500 
-            rounded-full hover:bg-indigo-600 transform transition-all duration-300 
-            hover:scale-105 hover:shadow-lg"
+            className="w-full sm:w-auto px-6 py-2 text-sm font-medium text-white 
+            bg-[var(--ilk-renk)] hover:bg-blue-600 rounded-full transform 
+            transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
             Learn More
           </button>

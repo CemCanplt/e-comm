@@ -1,11 +1,13 @@
-import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/slices/userSlice";
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.user);
 
@@ -15,7 +17,20 @@ function Header() {
 
   const handleLogout = () => {
     dispatch(logout());
+    setIsDropdownOpen(false);
   };
+
+  // Dropdown dışına tıklandığında kapanması için
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -41,21 +56,45 @@ function Header() {
 
         <div className="flex items-center space-x-4">
           {isAuthenticated ? (
-            <div className="flex items-center space-x-3">
-              {user?.avatar && (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="h-8 w-8 rounded-full"
-                />
-              )}
-              <span className="text-gray-700">{user?.name}</span>
+            <div className="relative" ref={dropdownRef}>
               <button
-                onClick={handleLogout}
-                className="text-[#737373] hover:text-[#252B42]"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center space-x-2 focus:outline-none"
               >
-                Logout
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
+                    hover:ring-blue-500 transition-all duration-200"
+                  />
+                ) : (
+                  <User className="h-8 w-8 p-1 rounded-full bg-gray-100" />
+                )}
+                <span className="text-gray-700 hidden md:block">
+                  {user?.name}
+                </span>
               </button>
+
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-50">
+                  <div className="px-4 py-2 border-b">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.name}
+                    </p>
+                    <p className="text-sm text-gray-500">{user?.email}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
+                    hover:bg-gray-100 space-x-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -74,6 +113,7 @@ function Header() {
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
 
+          {/* Mobile Menu Button */}
           {isOpen ? (
             <X
               onClick={toggleMenu}
@@ -88,6 +128,7 @@ function Header() {
         </div>
       </header>
 
+      {/* Mobile Menu */}
       <nav
         className={`${
           isOpen ? "block" : "hidden"
@@ -124,19 +165,6 @@ function Header() {
                 </Link>
               </li>
             </>
-          )}
-          {isAuthenticated && (
-            <li>
-              <button
-                onClick={() => {
-                  handleLogout();
-                  toggleMenu();
-                }}
-                className="block w-full px-4 py-2 text-[#737373] text-2xl font-semibold hover:bg-gray-100"
-              >
-                Logout
-              </button>
-            </li>
           )}
         </ul>
       </nav>
