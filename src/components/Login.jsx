@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { loginUser } from "../store/actions/userActions"; // Yeni path'i kullan
+import { loginUser } from "../store/actions/userActions";
 
 function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,21 +24,19 @@ function Login() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const result = await dispatch(
+      await dispatch(
         loginUser({
           email: data.email,
           password: data.password,
           rememberMe: data.rememberMe,
         })
-      ).unwrap();
+      );
 
-      if (result) {
-        toast.success("Login successful!", {
-          position: "top-center",
-          autoClose: 3000,
-        });
-        history.replace(from);
-      }
+      toast.success("Login successful!", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      history.replace(from);
     } catch (error) {
       toast.error(error?.message || "Invalid email or password", {
         position: "top-center",

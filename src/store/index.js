@@ -1,22 +1,18 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { combineReducers } from 'redux';
-import userReducer from './slices/userSlice';
+import { createStore, combineReducers, applyMiddleware } from "redux";
+import { thunk } from "redux-thunk"; // Correct import
+import logger from "redux-logger";
+import userReducer from "./reducers/userReducer";
+import productReducer from "./reducers/productReducer";
+import shoppingCartReducer from "./reducers/shoppingCartReducer";
 
 const rootReducer = combineReducers({
   user: userReducer,
-  // Gelecekte eklenecek reducerlar:
-  // products: productsReducer,
-  // cart: cartReducer,
-  // orders: ordersReducer,
-  // ...
+  product: productReducer,
+  shoppingCart: shoppingCartReducer,
 });
 
-const store = configureStore({
-  reducer: rootReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-    }),
-});
+const middleware = [thunk, logger];
+
+const store = createStore(rootReducer, applyMiddleware(...middleware));
 
 export default store;
