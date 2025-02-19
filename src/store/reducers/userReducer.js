@@ -8,7 +8,7 @@ const initialState = {
   theme: "light",
   language: "en",
   token: localStorage.getItem("token"),
-  isAuthenticated: !!localStorage.getItem("token"), // Check for token on init
+  isAuthenticated: !!localStorage.getItem("token"),
   loading: false,
   error: null,
 };
@@ -80,8 +80,11 @@ export const logout = () => ({
 // Reducer
 const userReducer = (state = initialState, action) => {
   switch (action.type) {
-    case USER_ACTIONS.SET_USER:
-      localStorage.setItem("user", JSON.stringify(action.payload));
+    case USER_ACTIONS.SET_USER: {
+      // Avatar hariç kullanıcı bilgilerini localStorage'a kaydet
+      const userForStorage = { ...action.payload };
+      delete userForStorage.avatar; // Avatar'ı localStorage'dan çıkar
+      localStorage.setItem("user", JSON.stringify(userForStorage));
       return {
         ...state,
         user: action.payload,
@@ -89,6 +92,7 @@ const userReducer = (state = initialState, action) => {
         loading: false,
         error: null,
       };
+    }
     case USER_ACTIONS.SET_ADDRESS_LIST:
       return { ...state, addressList: action.payload };
     case USER_ACTIONS.SET_CREDIT_CARDS:

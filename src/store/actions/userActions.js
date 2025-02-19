@@ -59,3 +59,25 @@ export const fetchRoles = () => {
     }
   };
 };
+
+// Yeni action: Kullanıcı bilgilerini yeniden çek
+export const refreshUserData = () => {
+  return async (dispatch, getState) => {
+    const { token, user } = getState().user; // user'ı da al
+    if (!token || !user) return; // token veya user yoksa çık
+
+    try {
+      const hash = md5(user.email.toLowerCase().trim());
+      const gravatarUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
+
+      dispatch(
+        setUser({
+          ...user,
+          avatar: gravatarUrl,
+        })
+      );
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    }
+  };
+};

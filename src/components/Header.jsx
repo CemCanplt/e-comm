@@ -5,12 +5,13 @@ import {
   Menu,
   X,
   LogOut,
-  ChevronDown,
+  // ChevronDown,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/reducers/userReducer";
+import { refreshUserData } from "../store/actions/userActions";
 
 function Header() {
   // State management
@@ -58,6 +59,13 @@ function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Sayfa yüklendiğinde kullanıcı bilgilerini yenile
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(refreshUserData());
+    }
+  }, [dispatch, isAuthenticated]);
 
   // Render authenticated user section
   const renderAuthenticatedSection = () => (
