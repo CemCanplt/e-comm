@@ -1,3 +1,5 @@
+import md5 from "md5";
+
 const initialState = {
   user: localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user"))
@@ -8,7 +10,7 @@ const initialState = {
   theme: "light",
   language: "en",
   token: localStorage.getItem("token"),
-  isAuthenticated: !!localStorage.getItem("token"), // Check for token on init
+  isAuthenticated: !!localStorage.getItem("token"),
   loading: false,
   error: null,
 };
@@ -80,15 +82,28 @@ export const logout = () => ({
 // Reducer
 const userReducer = (state = initialState, action) => {
   switch (action.type) {
-    case USER_ACTIONS.SET_USER:
-      localStorage.setItem("user", JSON.stringify(action.payload));
+    case USER_ACTIONS.SET_USER: {
+      // Gravatar URL'sini oluştur
+      const hash = md5(action.payload.email.toLowerCase().trim());
+      const gravatarUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
+
+      // User state'ini güncelle ve Gravatar URL'sini ekle
+      const userWithAvatar = {
+        ...action.payload,
+        avatar: gravatarUrl,
+      };
+
+      // Avatar dahil tüm kullanıcı bilgilerini localStorage'a kaydet
+      const userForStorage = { ...userWithAvatar };
+      localStorage.setItem("user", JSON.stringify(userForStorage));
       return {
         ...state,
-        user: action.payload,
+        user: userWithAvatar,
         isAuthenticated: true,
         loading: false,
         error: null,
       };
+    }
     case USER_ACTIONS.SET_ADDRESS_LIST:
       return { ...state, addressList: action.payload };
     case USER_ACTIONS.SET_CREDIT_CARDS:

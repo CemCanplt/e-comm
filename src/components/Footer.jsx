@@ -7,9 +7,9 @@ function Footer() {
         <div className="text-left mb-6 bg-(--Light-Gray) py-12 lg:flex lg:flex-row lg:justify-between lg:items-center">
           <h3 className="text-2xl font-bold text-gray-900">Bandage</h3>
           <div className="flex space-x-4 mt-2">
-            <Facebook className="text-blue-400 cursor-pointer" />
-            <Instagram className="text-blue-400 cursor-pointer" />
-            <Twitter className="text-blue-400 cursor-pointer" />
+            <Facebook className="text-(--ilk-renk) cursor-pointer" />
+            <Instagram className="text-(--ilk-renk) cursor-pointer" />
+            <Twitter className="text-(--ilk-renk) cursor-pointer" />
           </div>
         </div>
 

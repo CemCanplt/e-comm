@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // useEffect'i ekleyin
+import { useSelector } from "react-redux"; // useSelector'ı ekleyin
 import { useForm } from "react-hook-form";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -21,6 +22,16 @@ function Login() {
     mode: "onChange",
   });
 
+  // Redux'tan authentication durumunu al
+  const { isAuthenticated } = useSelector((state) => state.user);
+  const [showWarning, setShowWarning] = useState(false);
+
+  // Kullanıcı zaten giriş yapmışsa uyarı göster
+  // isAuthenticated değiştiğinde showWarning'i güncelle
+  useEffect(() => {
+    setShowWarning(isAuthenticated);
+  }, [isAuthenticated]);
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
@@ -29,6 +40,7 @@ function Login() {
           email: data.email,
           password: data.password,
           rememberMe: data.rememberMe,
+          switchAccount: isAuthenticated, // Yeni parametre
         })
       );
 
@@ -36,6 +48,7 @@ function Login() {
         position: "top-center",
         autoClose: 3000,
       });
+      setShowWarning(false);
       history.replace(from);
     } catch (error) {
       toast.error(error?.message || "Invalid email or password", {
@@ -50,6 +63,37 @@ function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
+        {showWarning && (
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-blue-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Aktif Oturum Mevcut
+                </h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>
+                    Zaten giriş yapmış durumdasınız.
+                    <br />
+                    Gene de farklı bir hesapla giriş yapabilirsiniz.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold text-(--Bandage-Rengi)">
             Sign in to your account

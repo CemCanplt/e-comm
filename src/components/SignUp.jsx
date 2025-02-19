@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useHistory } from "react-router-dom";
-import { useDispatch } from "react-redux"; // Redux dispatch ekle
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios"; // Axios'u doğrudan import et
@@ -12,7 +11,6 @@ function SignUp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const history = useHistory();
-  const dispatch = useDispatch(); // Redux dispatch'i ekle
 
   const {
     register,

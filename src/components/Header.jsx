@@ -5,18 +5,18 @@ import {
   Menu,
   X,
   LogOut,
-  ChevronDown,
+  // ChevronDown,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/reducers/userReducer";
+import { refreshUserData } from "../store/actions/userActions";
 
 function Header() {
   // State management
   const [isOpen, setIsOpen] = useState(false); // Mobile menu state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // User dropdown state
-  const [authTitle, setAuthTitle] = useState("Login"); // Auth button text
   const [showAuthMenu, setShowAuthMenu] = useState(false); // Auth menu visibility
 
   // Refs for click outside detection
@@ -48,16 +48,6 @@ function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Auto-changing auth title animation
-  useEffect(() => {
-    if (!isAuthenticated) {
-      const interval = setInterval(() => {
-        setAuthTitle((prev) => (prev === "Login" ? "Sign Up" : "Login"));
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated]);
-
   // Close auth menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -70,6 +60,14 @@ function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Sayfa yüklendiğinde kullanıcı bilgilerini yenile
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      dispatch(refreshUserData());
+    }
+  }, [dispatch]);
+
   // Render authenticated user section
   const renderAuthenticatedSection = () => (
     <div className="relative" ref={dropdownRef}>
@@ -78,12 +76,18 @@ function Header() {
         className="flex items-center space-x-2 focus:outline-none"
       >
         {user?.avatar ? (
-          <img
-            src={user.avatar}
-            alt={user.name}
-            className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
-            hover:ring-blue-500 transition-all duration-200"
-          />
+          !user.avatar.includes("identicon") ? ( // Gravatar URL'i henüz yüklenmemişse
+            <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+              <User className="h-6 w-6 text-gray-400" />
+            </div>
+          ) : (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
+              hover:ring-blue-500 transition-all duration-200"
+            />
+          )
         ) : (
           <User className="h-8 w-8 p-1 rounded-full bg-gray-100" />
         )}
@@ -92,9 +96,11 @@ function Header() {
 
       {/* User Dropdown Menu */}
       {isDropdownOpen && (
-        <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-50">
+        <div className="absolute right-0 mt-2 py-2 min-w-48 max-w-md bg-white rounded-lg shadow-xl z-50">
           <div className="px-4 py-2 border-b">
-            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.name}
+            </p>
             <p className="text-sm text-gray-500">{user?.email}</p>
           </div>
           <button
@@ -102,7 +108,7 @@ function Header() {
             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
             hover:bg-gray-100 space-x-2"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 flex-shrink-0" />
             <span>Sign out</span>
           </button>
         </div>
@@ -118,19 +124,17 @@ function Header() {
 
     return (
       <div
-        className="relative w-24"
+        className="relative"
         ref={authMenuRef}
         onMouseEnter={() => setShowAuthMenu(true)}
         onMouseLeave={() => setShowAuthMenu(false)}
       >
-        {/* Auth Button */}
+        {/* User Icon Button */}
         <button
-          className="flex items-center justify-center gap-2 w-full text-[#737373] 
-          hover:text-[#252B42] transition-colors duration-200"
-          onClick={() => setShowAuthMenu(!showAuthMenu)}
+          className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+          aria-label="Authentication menu"
         >
-          <span className="text-right font-medium">{authTitle}</span>
-          <ChevronDown className="h-4 w-4" />
+          <User className="h-6 w-6 text-gray-600 hover:text-gray-900" />
         </button>
 
         {/* Auth Dropdown Menu */}
@@ -144,18 +148,20 @@ function Header() {
         >
           <Link
             to="/login"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
             transition-colors duration-150"
             onClick={() => setShowAuthMenu(false)}
           >
+            <LogOut className="h-4 w-4 mr-2" />
             Login
           </Link>
           <Link
             to="/signup"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
             transition-colors duration-150"
             onClick={() => setShowAuthMenu(false)}
           >
+            <User className="h-4 w-4 mr-2" />
             Sign Up
           </Link>
         </div>
@@ -166,32 +172,45 @@ function Header() {
   return (
     <>
       {/* Main Header */}
-      <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="text-xl font-bold text-[#252B42]">
-          Bandage
-        </Link>
+      <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center">
+        {/* Left Section */}
+        <div className="flex-1 flex justify-start">
+          <Link to="/" className="text-xl font-bold text-(--Bandage-Rengi)">
+            Bandage
+          </Link>
+        </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-[#737373] hover:text-[#252B42]">
+        {/* Center Section - Navigation */}
+        <nav className="flex-1 hidden md:flex items-center justify-center space-x-6">
+          <Link
+            to="/"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Home
           </Link>
-          <Link to="/shop" className="text-[#737373] hover:text-[#252B42]">
+          <Link
+            to="/shop"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Shop
           </Link>
-          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+          <a
+            href="#"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Pricing
           </a>
-          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+          <a
+            href="#"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Contact
           </a>
         </nav>
 
-        {/* Right Section: Auth, Search, Cart, Mobile Menu */}
-        <div className="flex items-center space-x-4">
+        {/* Right Section */}
+        <div className="flex-1 flex items-center justify-end space-x-4">
           {renderAuthSection()}
-
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
 
@@ -199,14 +218,12 @@ function Header() {
           {isOpen ? (
             <X
               onClick={toggleMenu}
-              className="focus:outline-none cursor-pointer text-gray-600 
-              hover:text-gray-900 md:hidden"
+              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
             />
           ) : (
             <Menu
               onClick={toggleMenu}
-              className="focus:outline-none cursor-pointer text-gray-600 
-              hover:text-gray-900 md:hidden"
+              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
             />
           )}
         </div>
@@ -222,7 +239,7 @@ function Header() {
           <li>
             <Link
               to="/"
-              className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+              className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
               hover:bg-gray-100"
               onClick={toggleMenu}
             >
@@ -234,7 +251,7 @@ function Header() {
               <li>
                 <Link
                   to="/login"
-                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
                   hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
@@ -244,7 +261,7 @@ function Header() {
               <li>
                 <Link
                   to="/signup"
-                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
                   hover:bg-gray-100"
                   onClick={toggleMenu}
                 >

@@ -22,8 +22,10 @@ function FeaturedProducts() {
     <div className="flex font-(--Bandage-Fontu) lg:items-center md:text-center md: flex-col gap-10 px-10 py-10 md:px-20">
       <div className="flex flex-col items-center gap-5 xl:flex-row xl:justify-between xl:px-20">
         <div className="flex flex-col items-center gap-5 xl:order-2 xl:max-w-120 ">
-          <p className="text-sky-500">Featured Products</p>
-          <h1 className="text-2xl font-bold">We love what we do</h1>
+          <p className="text-(--ilk-renk)">Featured Products</p>
+          <h1 className="text-2xl font-bold text-(--Bandage-Rengi)">
+            We love what we do
+          </h1>
           <p className="text-(--ikinci-metin-rengi) xl:text-left">
             Problems trying to resolve the conflict between the two major realms
             of Classical physics: Newtonian mechanics.
