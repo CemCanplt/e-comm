@@ -172,14 +172,16 @@ function Header() {
   return (
     <>
       {/* Main Header */}
-      <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="text-xl font-bold text-[#252B42]">
-          Bandage
-        </Link>
+      <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center">
+        {/* Left Section */}
+        <div className="flex-1 flex justify-start">
+          <Link to="/" className="text-xl font-bold text-[#252B42]">
+            Bandage
+          </Link>
+        </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
+        {/* Center Section - Navigation */}
+        <nav className="flex-1 hidden md:flex items-center justify-center space-x-6">
           <Link to="/" className="text-[#737373] hover:text-[#252B42]">
             Home
           </Link>
@@ -194,10 +196,9 @@ function Header() {
           </a>
         </nav>
 
-        {/* Right Section: Auth, Search, Cart, Mobile Menu */}
-        <div className="flex items-center space-x-4">
+        {/* Right Section */}
+        <div className="flex-1 flex items-center justify-end space-x-4">
           {renderAuthSection()}
-
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
 
@@ -205,14 +206,12 @@ function Header() {
           {isOpen ? (
             <X
               onClick={toggleMenu}
-              className="focus:outline-none cursor-pointer text-gray-600 
-              hover:text-gray-900 md:hidden"
+              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
             />
           ) : (
             <Menu
               onClick={toggleMenu}
-              className="focus:outline-none cursor-pointer text-gray-600 
-              hover:text-gray-900 md:hidden"
+              className="focus:outline-none cursor-pointer text-gray-600 hover:text-gray-900 md:hidden"
             />
           )}
         </div>
