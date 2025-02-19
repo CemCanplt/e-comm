@@ -8,10 +8,38 @@ import {
   setRoles, // Import setRoles
 } from "../reducers/userReducer";
 
-export const loginUser = ({ email, password, rememberMe }) => {
+export const refreshUserData = () => {
+  return async (dispatch, getState) => {
+    const { token } = getState().user;
+    if (!token) return;
+
+    try {
+      const response = await axios.get(
+        "https://workintech-fe-ecommerce.onrender.com/user",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // API'den gelen kullanıcı bilgilerini doğrudan dispatch et
+      dispatch(setUser(response.data));
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    }
+  };
+};
+
+export const loginUser = ({ email, password, rememberMe, switchAccount }) => {
   return async (dispatch) => {
     dispatch(setLoading(true));
     try {
+      // Eğer hesap değiştirme durumu varsa, mevcut token'ı temizle
+      if (switchAccount) {
+        dispatch(setToken(null));
+      }
+
       const response = await axios.post(
         "https://workintech-fe-ecommerce.onrender.com/login",
         {
@@ -20,13 +48,16 @@ export const loginUser = ({ email, password, rememberMe }) => {
         }
       );
 
-      const { token, user } = response.data;
-
+      // API'den gelen veriyi işle
+      const { token, name, email: userEmail, role_id } = response.data;
       const hash = md5(email.toLowerCase().trim());
       const gravatarUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 
+      // Yeni formatı kullanarak user objesini oluştur
       const userWithAvatar = {
-        ...user,
+        name: name,
+        email: userEmail,
+        role_id: role_id,
         avatar: gravatarUrl,
       };
 
@@ -56,28 +87,6 @@ export const fetchRoles = () => {
       dispatch(setError("Failed to fetch roles"));
     } finally {
       dispatch(setLoading(false));
-    }
-  };
-};
-
-// Yeni action: Kullanıcı bilgilerini yeniden çek
-export const refreshUserData = () => {
-  return async (dispatch, getState) => {
-    const { token, user } = getState().user; // user'ı da al
-    if (!token || !user) return; // token veya user yoksa çık
-
-    try {
-      const hash = md5(user.email.toLowerCase().trim());
-      const gravatarUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
-
-      dispatch(
-        setUser({
-          ...user,
-          avatar: gravatarUrl,
-        })
-      );
-    } catch (error) {
-      console.error("Failed to refresh user data:", error);
     }
   };
 };

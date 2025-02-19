@@ -1,3 +1,5 @@
+import md5 from "md5";
+
 const initialState = {
   user: localStorage.getItem("user")
     ? JSON.parse(localStorage.getItem("user"))
@@ -81,13 +83,22 @@ export const logout = () => ({
 const userReducer = (state = initialState, action) => {
   switch (action.type) {
     case USER_ACTIONS.SET_USER: {
-      // Avatar hariç kullanıcı bilgilerini localStorage'a kaydet
-      const userForStorage = { ...action.payload };
-      delete userForStorage.avatar; // Avatar'ı localStorage'dan çıkar
+      // Gravatar URL'sini oluştur
+      const hash = md5(action.payload.email.toLowerCase().trim());
+      const gravatarUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
+
+      // User state'ini güncelle ve Gravatar URL'sini ekle
+      const userWithAvatar = {
+        ...action.payload,
+        avatar: gravatarUrl,
+      };
+
+      // Avatar dahil tüm kullanıcı bilgilerini localStorage'a kaydet
+      const userForStorage = { ...userWithAvatar };
       localStorage.setItem("user", JSON.stringify(userForStorage));
       return {
         ...state,
-        user: action.payload,
+        user: userWithAvatar,
         isAuthenticated: true,
         loading: false,
         error: null,

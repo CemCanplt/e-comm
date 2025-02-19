@@ -62,10 +62,11 @@ function Header() {
 
   // Sayfa yüklendiğinde kullanıcı bilgilerini yenile
   useEffect(() => {
-    if (isAuthenticated) {
+    const token = localStorage.getItem("token");
+    if (token) {
       dispatch(refreshUserData());
     }
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch]);
 
   // Render authenticated user section
   const renderAuthenticatedSection = () => (
@@ -75,12 +76,18 @@ function Header() {
         className="flex items-center space-x-2 focus:outline-none"
       >
         {user?.avatar ? (
-          <img
-            src={user.avatar}
-            alt={user.name}
-            className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
-            hover:ring-blue-500 transition-all duration-200"
-          />
+          !user.avatar.includes("identicon") ? ( // Gravatar URL'i henüz yüklenmemişse
+            <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+              <User className="h-6 w-6 text-gray-400" />
+            </div>
+          ) : (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
+              hover:ring-blue-500 transition-all duration-200"
+            />
+          )
         ) : (
           <User className="h-8 w-8 p-1 rounded-full bg-gray-100" />
         )}
@@ -89,9 +96,11 @@ function Header() {
 
       {/* User Dropdown Menu */}
       {isDropdownOpen && (
-        <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-xl z-50">
+        <div className="absolute right-0 mt-2 py-2 min-w-48 max-w-md bg-white rounded-lg shadow-xl z-50">
           <div className="px-4 py-2 border-b">
-            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.name}
+            </p>
             <p className="text-sm text-gray-500">{user?.email}</p>
           </div>
           <button
@@ -99,7 +108,7 @@ function Header() {
             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
             hover:bg-gray-100 space-x-2"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 flex-shrink-0" />
             <span>Sign out</span>
           </button>
         </div>
