@@ -16,7 +16,6 @@ function Header() {
   // State management
   const [isOpen, setIsOpen] = useState(false); // Mobile menu state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // User dropdown state
-  const [authTitle, setAuthTitle] = useState("Login"); // Auth button text
   const [showAuthMenu, setShowAuthMenu] = useState(false); // Auth menu visibility
 
   // Refs for click outside detection
@@ -47,16 +46,6 @@ function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Auto-changing auth title animation
-  useEffect(() => {
-    if (!isAuthenticated) {
-      const interval = setInterval(() => {
-        setAuthTitle((prev) => (prev === "Login" ? "Sign Up" : "Login"));
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated]);
 
   // Close auth menu when clicking outside
   useEffect(() => {
@@ -118,19 +107,17 @@ function Header() {
 
     return (
       <div
-        className="relative w-24"
+        className="relative"
         ref={authMenuRef}
         onMouseEnter={() => setShowAuthMenu(true)}
         onMouseLeave={() => setShowAuthMenu(false)}
       >
-        {/* Auth Button */}
+        {/* User Icon Button */}
         <button
-          className="flex items-center justify-center gap-2 w-full text-[#737373] 
-          hover:text-[#252B42] transition-colors duration-200"
-          onClick={() => setShowAuthMenu(!showAuthMenu)}
+          className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+          aria-label="Authentication menu"
         >
-          <span className="text-right font-medium">{authTitle}</span>
-          <ChevronDown className="h-4 w-4" />
+          <User className="h-6 w-6 text-gray-600 hover:text-gray-900" />
         </button>
 
         {/* Auth Dropdown Menu */}
@@ -144,18 +131,20 @@ function Header() {
         >
           <Link
             to="/login"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
             transition-colors duration-150"
             onClick={() => setShowAuthMenu(false)}
           >
+            <LogOut className="h-4 w-4 mr-2" />
             Login
           </Link>
           <Link
             to="/signup"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
             transition-colors duration-150"
             onClick={() => setShowAuthMenu(false)}
           >
+            <User className="h-4 w-4 mr-2" />
             Sign Up
           </Link>
         </div>
