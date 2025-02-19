@@ -175,23 +175,35 @@ function Header() {
       <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center">
         {/* Left Section */}
         <div className="flex-1 flex justify-start">
-          <Link to="/" className="text-xl font-bold text-[#252B42]">
+          <Link to="/" className="text-xl font-bold text-(--Bandage-Rengi)">
             Bandage
           </Link>
         </div>
 
         {/* Center Section - Navigation */}
         <nav className="flex-1 hidden md:flex items-center justify-center space-x-6">
-          <Link to="/" className="text-[#737373] hover:text-[#252B42]">
+          <Link
+            to="/"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Home
           </Link>
-          <Link to="/shop" className="text-[#737373] hover:text-[#252B42]">
+          <Link
+            to="/shop"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Shop
           </Link>
-          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+          <a
+            href="#"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Pricing
           </a>
-          <a href="#" className="text-[#737373] hover:text-[#252B42]">
+          <a
+            href="#"
+            className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+          >
             Contact
           </a>
         </nav>
@@ -227,7 +239,7 @@ function Header() {
           <li>
             <Link
               to="/"
-              className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+              className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
               hover:bg-gray-100"
               onClick={toggleMenu}
             >
@@ -239,7 +251,7 @@ function Header() {
               <li>
                 <Link
                   to="/login"
-                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
                   hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
@@ -249,7 +261,7 @@ function Header() {
               <li>
                 <Link
                   to="/signup"
-                  className="block px-4 py-2 text-[#737373] text-2xl font-semibold 
+                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
                   hover:bg-gray-100"
                   onClick={toggleMenu}
                 >

@@ -33,10 +33,10 @@ function BestSellerProducts() {
   return (
     <div className="container mx-auto px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl text-center font-bold text-[#252B42] mb-4">
+        <h1 className="text-2xl md:text-3xl text-center font-bold text-(--Bandage-Rengi) mb-4">
           BESTSELLERS PRODUCTS
         </h1>
-        <p className="text-center text-gray-600 mb-12">
+        <p className="text-center text-(--ikinci-metin-rengi) mb-12">
           Problems trying to resolve the conflict between
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
