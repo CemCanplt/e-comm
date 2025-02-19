@@ -6,6 +6,7 @@ import PageContent from "./components/PageContent";
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import Shop from "./components/Shop";
+import ProductDetail from "./components/ProductDetail";
 import { ToastContainer } from "react-toastify";
 
 function App() {
@@ -17,7 +18,8 @@ function App() {
           <Route exact path="/" component={PageContent} />
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
-          <Route path="/shop" component={Shop} />
+          <Route exact path="/shop" component={Shop} />
+          <Route path="/shop/product/:id" component={ProductDetail} />
         </Switch>
       </main>
       <Footer />

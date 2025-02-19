@@ -8,6 +8,7 @@ import {
   setProductList,
 } from "../store/reducers/productReducer";
 import { mockProducts, categories } from "../data/mockProducts";
+import { useHistory } from "react-router-dom";
 
 function Shop() {
   const dispatch = useDispatch();
@@ -22,6 +23,8 @@ function Shop() {
     priceRange.current[0],
     priceRange.current[1],
   ]);
+
+  const history = useHistory();
 
   // Initialize products on component mount
   useEffect(() => {
@@ -219,7 +222,9 @@ function Shop() {
             {displayedProducts.map((product) => (
               <div
                 key={product.id}
-                className={`bg-white rounded-lg shadow-sm overflow-hidden 
+                onClick={() => history.push(`/shop/product/${product.id}`)}
+                className={`bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer
+                transition-transform hover:scale-105 
                 ${viewMode === "list" ? "flex" : "block"}`}
               >
                 <img
