@@ -6,6 +6,7 @@ import {
   setLoading,
   setError,
   setRoles, // Import setRoles
+  logout, // Import logout
 } from "../reducers/userReducer";
 
 export const refreshUserData = () => {
@@ -87,6 +88,37 @@ export const fetchRoles = () => {
       dispatch(setError("Failed to fetch roles"));
     } finally {
       dispatch(setLoading(false));
+    }
+  };
+};
+
+export const autoLogin = () => {
+  return async (dispatch) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Set the token into axios header without Bearer prefix
+    axios.defaults.headers.common["Authorization"] = token;
+
+    try {
+      const response = await axios.get(
+        "https://workintech-fe-ecommerce.onrender.com/verify"
+      );
+      // Assuming the response contains a new token and user info
+      const { token: newToken, ...userData } = response.data;
+
+      // Renew the token if provided; otherwise keep the existing token
+      const updatedToken = newToken || token;
+      axios.defaults.headers.common["Authorization"] = updatedToken;
+      localStorage.setItem("token", updatedToken);
+
+      // Dispatch the user information to update the reducer
+      dispatch(setUser(userData));
+    } catch (error) {
+      // If verification fails, remove the token and reset authentication
+      localStorage.removeItem("token");
+      delete axios.defaults.headers.common["Authorization"];
+      dispatch(logout());
     }
   };
 };
