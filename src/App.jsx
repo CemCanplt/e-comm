@@ -8,6 +8,7 @@ import Login from "./components/Login";
 import Shop from "./components/Shop";
 import ProductDetail from "./components/ProductDetail";
 import Contact from "./components/content/Contact";
+import Team from "./components/Team"; // <-- Import new Team component
 import { ToastContainer } from "react-toastify";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route exact path="/shop" component={Shop} />
           <Route path="/shop/product/:id" component={ProductDetail} />
           <Route path="/contact" component={Contact} />
+          <Route path="/team" component={Team} /> {/* New Team route */}
         </Switch>
       </main>
       <Footer />
