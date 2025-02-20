@@ -7,6 +7,7 @@ import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import Shop from "./components/Shop";
 import ProductDetail from "./components/ProductDetail";
+import Contact from "./components/content/Contact";
 import { ToastContainer } from "react-toastify";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/login" component={Login} />
           <Route exact path="/shop" component={Shop} />
           <Route path="/shop/product/:id" component={ProductDetail} />
+          <Route path="/contact" component={Contact} />
         </Switch>
       </main>
       <Footer />
