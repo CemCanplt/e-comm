@@ -23,6 +23,8 @@ const teamMembers = [
   // Add more team members as needed
 ];
 
+// Team sayfası
+
 function Team() {
   return (
     <div className="container mx-auto px-4 py-8">
