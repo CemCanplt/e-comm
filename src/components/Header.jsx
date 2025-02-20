@@ -200,12 +200,12 @@ function Header() {
           >
             Pricing
           </a>
-          <a
-            href="#"
+          <Link // Changed from <a> to <Link>
+            to="/contact" // Added to prop
             className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
           >
             Contact
-          </a>
+          </Link>
         </nav>
 
         {/* Right Section */}
@@ -265,13 +265,13 @@ function Header() {
             </a>
           </li>
           <li>
-            <a
-              href="#"
+            <Link // Changed from <a> to <Link>
+              to="/contact" // Added to prop
               className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold hover:bg-gray-100"
               onClick={toggleMenu}
             >
               Contact
-            </a>
+            </Link>
           </li>
           {!isAuthenticated && (
             <>
