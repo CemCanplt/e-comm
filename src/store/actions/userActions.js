@@ -2,11 +2,12 @@ import axios from "axios";
 import md5 from "md5";
 import {
   setUser,
-  setToken,
+  setToken as setTokenAction, // setToken'ı farklı bir isimle import ediyoruz
   setLoading,
   setError,
-  setRoles, // Import setRoles
-  logout, // Import logout
+  setRoles,
+  logout,
+  USER_ACTIONS, // USER_ACTIONS'ı da import ediyoruz
 } from "../reducers/userReducer";
 
 export const refreshUserData = () => {
@@ -24,7 +25,6 @@ export const refreshUserData = () => {
         }
       );
 
-      // API'den gelen kullanıcı bilgilerini doğrudan dispatch et
       dispatch(setUser(response.data));
     } catch (error) {
       console.error("Failed to refresh user data:", error);
@@ -36,9 +36,8 @@ export const loginUser = ({ email, password, rememberMe, switchAccount }) => {
   return async (dispatch) => {
     dispatch(setLoading(true));
     try {
-      // Eğer hesap değiştirme durumu varsa, mevcut token'ı temizle
       if (switchAccount) {
-        dispatch(setToken(null));
+        dispatch(setTokenAction(null)); // setTokenAction kullanıyoruz
       }
 
       const response = await axios.post(
@@ -49,29 +48,27 @@ export const loginUser = ({ email, password, rememberMe, switchAccount }) => {
         }
       );
 
-      // API'den gelen veriyi işle
       const { token, name, email: userEmail, role_id } = response.data;
       const hash = md5(email.toLowerCase().trim());
       const gravatarUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 
-      // Yeni formatı kullanarak user objesini oluştur
       const userWithAvatar = {
         name: name,
         email: userEmail,
         role_id: role_id,
         avatar: gravatarUrl,
+        rememberMe,
       };
 
       dispatch(setUser(userWithAvatar));
-
-      if (rememberMe) {
-        dispatch(setToken(token));
-      }
+      dispatch(setTokenAction(token, rememberMe)); // setTokenAction kullanıyoruz
 
       return response.data;
     } catch (error) {
       dispatch(setError(error.response?.data || "Login failed"));
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 };

@@ -1,16 +1,24 @@
 import md5 from "md5";
 
+// İlk başta localStorage ya da sessionStorage'dan oku
+const storedUser = localStorage.getItem("user")
+  ? JSON.parse(localStorage.getItem("user"))
+  : sessionStorage.getItem("user")
+  ? JSON.parse(sessionStorage.getItem("user"))
+  : null;
+
+const storedToken =
+  localStorage.getItem("token") || sessionStorage.getItem("token");
+
 const initialState = {
-  user: localStorage.getItem("user")
-    ? JSON.parse(localStorage.getItem("user"))
-    : null,
+  user: storedUser,
   addressList: [],
   creditCards: [],
   roles: [],
   theme: "light",
   language: "en",
-  token: localStorage.getItem("token"),
-  isAuthenticated: !!localStorage.getItem("token"),
+  token: storedToken,
+  isAuthenticated: !!storedToken,
   loading: false,
   error: null,
 };
@@ -60,9 +68,10 @@ export const setLanguage = (language) => ({
   payload: language,
 });
 
-export const setToken = (token) => ({
+export const setToken = (token, rememberMe = false) => ({
   type: USER_ACTIONS.SET_TOKEN,
   payload: token,
+  rememberMe,
 });
 
 export const setLoading = (loading) => ({
@@ -93,9 +102,12 @@ const userReducer = (state = initialState, action) => {
         avatar: gravatarUrl,
       };
 
-      // Avatar dahil tüm kullanıcı bilgilerini localStorage'a kaydet
-      const userForStorage = { ...userWithAvatar };
-      localStorage.setItem("user", JSON.stringify(userForStorage));
+      // Hangi depoyu kullanacağımızı kontrol et (rememberMe true ise localStorage, değilse sessionStorage)
+      if (action.payload.rememberMe) {
+        localStorage.setItem("user", JSON.stringify(userWithAvatar));
+      } else {
+        sessionStorage.setItem("user", JSON.stringify(userWithAvatar));
+      }
       return {
         ...state,
         user: userWithAvatar,
@@ -116,9 +128,14 @@ const userReducer = (state = initialState, action) => {
       return { ...state, language: action.payload };
     case USER_ACTIONS.SET_TOKEN:
       if (action.payload) {
-        localStorage.setItem("token", action.payload);
+        if (action.rememberMe) {
+          localStorage.setItem("token", action.payload);
+        } else {
+          sessionStorage.setItem("token", action.payload);
+        }
       } else {
         localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
       }
       return {
         ...state,
@@ -132,6 +149,8 @@ const userReducer = (state = initialState, action) => {
     case USER_ACTIONS.LOGOUT:
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
       return {
         ...initialState,
         token: null,
