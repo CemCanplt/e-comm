@@ -8,10 +8,19 @@ import Login from "./components/Login";
 import Shop from "./components/Shop";
 import ProductDetail from "./components/ProductDetail";
 import Contact from "./components/content/Contact";
-import Team from "./components/Team"; // <-- Import new Team component
+import Team from "./components/Team";
 import { ToastContainer } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { autoLogin } from "./store/actions/userActions";
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(autoLogin());
+  }, [dispatch]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -23,7 +32,7 @@ function App() {
           <Route exact path="/shop" component={Shop} />
           <Route path="/shop/product/:id" component={ProductDetail} />
           <Route path="/contact" component={Contact} />
-          <Route path="/team" component={Team} /> {/* New Team route */}
+          <Route path="/team" component={Team} />
         </Switch>
       </main>
       <Footer />
