@@ -28,12 +28,11 @@ function SignUp() {
     const fetchRoles = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
+        const { data } = await axios.get(
           "https://workintech-fe-ecommerce.onrender.com/roles"
         );
-        setRoles(response.data);
+        setRoles(data);
       } catch (error) {
-        console.error("Failed to fetch roles:", error);
         toast.error("Failed to fetch roles. Please try again later.");
       } finally {
         setLoading(false);
@@ -46,49 +45,41 @@ function SignUp() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const signupData = isStore
-        ? {
-            name: data.name,
-            email: data.email,
-            password: data.password,
-            role_id: Number(data.role_id),
-            store: {
-              name: data.store_name,
-              phone: data.store_phone,
-              tax_no: data.store_tax_no,
-              bank_account: data.store_bank_account,
-            },
-          }
-        : {
-            name: data.name,
-            email: data.email,
-            password: data.password,
-            role_id: Number(data.role_id),
-          };
+      const signupData = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        role_id: Number(data.role_id),
+        ...(isStore && {
+          store: {
+            name: data.store_name,
+            phone: data.store_phone,
+            tax_no: data.store_tax_no,
+            bank_account: data.store_bank_account,
+          },
+        }),
+      };
 
-      const response = await axios.post(
+      await axios.post(
         "https://workintech-fe-ecommerce.onrender.com/signup",
         signupData
       );
 
-      if (response.data) {
-        toast.warn(
-          "You need to click the link in your email to activate your account!"
-        );
-        history.push("/login");
-      }
+      toast.warn(
+        "You need to click the link in your email to activate your account!"
+      );
+      history.push("/login");
     } catch (error) {
-      const errorData = error.response?.data;
+      const { response } = error;
+      const { data, status } = response || {};
+      const { err, error: errMsg, message } = data || {};
 
-      if (
-        errorData?.err?.errno === 19 &&
-        errorData?.err?.code === "SQLITE_CONSTRAINT"
-      ) {
+      if (status === 409 && err?.errno === 19 && err?.code === "SQLITE_CONSTRAINT") {
         toast.error(
           "This email is already registered. Please try with a different email address."
         );
       } else {
-        toast.error(errorData?.error || errorData?.message || "Signup failed");
+        toast.error(errMsg || message || "Signup failed");
       }
     } finally {
       setIsSubmitting(false);
@@ -163,18 +154,13 @@ function SignUp() {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                     message: "Invalid email address",
                   },
-                  validate: async (value) => {
-                    try {
-                      const response = await fetch(
-                        `${baseURL}/check-email?email=${value}`
-                      );
-                      const data = await response.json();
-                      return (
-                        data.available || "This email is already registered"
-                      );
-                    } catch (error) {
-                      return true;
-                    }
+                  async validate(value) {
+                    const response = await fetch(
+                      `${baseURL}/check-email?email=${value}`,
+                      { cache: "no-store" }
+                    );
+                    const data = await response.json();
+                    return data.available || "This email is already registered";
                   },
                 })}
                 className={`appearance-none rounded relative block w-full px-3 py-2 border ${
@@ -229,8 +215,7 @@ function SignUp() {
                 type="password"
                 {...register("password_repeat", {
                   required: "Password repeat is required",
-                  validate: (value) =>
-                    value === watch("password") || "Passwords do not match",
+                  validate: ({ password }) => password === watch("password") || "Passwords do not match",
                 })}
                 className={`appearance-none rounded relative block w-full px-3 py-2 border ${
                   errors.password_repeat ? "border-red-500" : "border-gray-300"

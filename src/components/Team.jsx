@@ -30,40 +30,19 @@ function Team() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Our Team</h1>
 
-      {/* Mobile View */}
-      <div className="block md:hidden space-y-6">
-        {teamMembers.map((member, index) => (
-          <div
-            key={index}
-            className="flex items-center space-x-4 p-4 bg-white shadow rounded"
-          >
-            <img
-              src={member.img}
-              alt={member.name}
-              className="w-16 h-16 rounded-full object-cover"
-            />
-            <div>
-              <h2 className="text-lg font-semibold">{member.name}</h2>
-              <p className="text-sm text-gray-600">{member.role}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Desktop View */}
-      <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-8">
-        {teamMembers.map((member, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {teamMembers.map(({ name, role, img }, index) => (
           <div
             key={index}
             className="flex flex-col items-center bg-white p-6 shadow rounded"
           >
             <img
-              src={member.img}
-              alt={member.name}
+              src={img}
+              alt={name}
               className="w-24 h-24 rounded-full object-cover mb-4"
             />
-            <h2 className="text-xl font-semibold">{member.name}</h2>
-            <p className="text-md text-gray-600">{member.role}</p>
+            <h2 className="text-xl font-semibold">{name}</h2>
+            <p className="text-md text-gray-600">{role}</p>
           </div>
         ))}
       </div>
