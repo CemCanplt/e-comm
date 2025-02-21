@@ -32,22 +32,18 @@ function Shop() {
   }, [dispatch]);
 
   // Filter products by category and price
-  const filterProductsByCategory = (products) => {
-    if (selectedCategory === "All") return products;
-    return products.filter((product) => product.category === selectedCategory);
-  };
+  const filterProductsByCategory = (products) =>
+    selectedCategory === "All"
+      ? products
+      : products.filter(({ category }) => category === selectedCategory);
 
   // Price range change handler
-  const handlePriceRangeChange = (e) => {
-    const value = parseInt(e.target.value);
-    const isMin = e.target.name === "min";
-    let newValues = [...priceValues];
-
-    if (isMin) {
-      newValues[0] = Math.min(value, priceValues[1]);
-    } else {
-      newValues[1] = Math.max(value, priceValues[0]);
-    }
+  const handlePriceRangeChange = ({ target: { value, name } }) => {
+    const parsedValue = parseInt(value);
+    const newValues = [
+      name === "min" ? Math.min(parsedValue, priceValues[1]) : priceValues[0],
+      name === "max" ? Math.max(parsedValue, priceValues[0]) : priceValues[1],
+    ];
 
     setPriceValues(newValues);
     dispatch(setPriceRange(newValues));

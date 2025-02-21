@@ -1,4 +1,5 @@
 import { Facebook, Instagram, Twitter } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function Footer() {
   return (
@@ -17,7 +18,9 @@ function Footer() {
           <div className="space-y-2">
             <h3 className="font-bold">Company Info</h3>
             <ul className="text-sm space-y-2 font-bold text-(--ikinci-metin-rengi)">
-              <li>About Us</li>
+              <li>
+                <Link to="/aboutUs">About Us</Link>
+              </li>
               <li>Carrier</li>
               <li>We are hiring</li>
               <li>Blog</li>
@@ -26,7 +29,9 @@ function Footer() {
           <div className="space-y-2">
             <h3 className="font-bold">Legal</h3>
             <ul className="text-sm space-y-2 font-bold text-(--ikinci-metin-rengi)">
-              <li>About Us</li>
+              <li>
+                <Link to="/aboutUs">About Us</Link>
+              </li>
               <li>Carrier</li>
               <li>We are hiring</li>
               <li>Blog</li>

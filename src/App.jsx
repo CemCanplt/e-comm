@@ -13,6 +13,7 @@ import { ToastContainer } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { autoLogin } from "./store/actions/userActions";
+import AboutUsPage from "./components/content/AboutUsPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -33,6 +34,9 @@ function App() {
           <Route path="/shop/product/:id" component={ProductDetail} />
           <Route path="/contact" component={Contact} />
           <Route path="/team" component={Team} />
+          <Route path="/aboutUs" component={AboutUsPage} />
+
+          <Route path="*" component={() => <h1>404 Not Found</h1>} />
         </Switch>
       </main>
       <Footer />
