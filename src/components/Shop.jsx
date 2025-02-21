@@ -32,10 +32,10 @@ function Shop() {
   }, [dispatch]);
 
   // Filter products by category and price
-  const filterProductsByCategory = (products) => {
-    if (selectedCategory === "All") return products;
-    return products.filter((product) => product.category === selectedCategory);
-  };
+  const filterProductsByCategory = (products) =>
+    selectedCategory === "All"
+      ? products
+      : products.filter(({ category }) => category === selectedCategory);
 
   // Price range change handler
   const handlePriceRangeChange = (e) => {
