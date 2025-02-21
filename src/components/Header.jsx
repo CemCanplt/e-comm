@@ -123,48 +123,37 @@ function Header() {
     }
 
     return (
-      <div
-        className="relative"
-        ref={authMenuRef}
-        onMouseEnter={() => setShowAuthMenu(true)}
-        onMouseLeave={() => setShowAuthMenu(false)}
-      >
+      <div className="relative" ref={authMenuRef}>
         {/* User Icon Button */}
         <button
           className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
           aria-label="Authentication menu"
+          onClick={() => setShowAuthMenu(!showAuthMenu)}
         >
           <User className="h-6 w-6 text-gray-600 hover:text-gray-900" />
         </button>
 
         {/* Auth Dropdown Menu */}
-        <div
-          className={`absolute right-0 mt-2 py-1 w-48 bg-white rounded-lg shadow-xl z-50 
-          transform transition-all duration-200 ${
-            showAuthMenu
-              ? "opacity-100 translate-y-0 visible"
-              : "opacity-0 -translate-y-2 invisible"
-          }`}
-        >
-          <Link
-            to="/login"
-            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
-            transition-colors duration-150"
-            onClick={() => setShowAuthMenu(false)}
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Login
-          </Link>
-          <Link
-            to="/signup"
-            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 
-            transition-colors duration-150"
-            onClick={() => setShowAuthMenu(false)}
-          >
-            <User className="h-4 w-4 mr-2" />
-            Sign Up
-          </Link>
-        </div>
+        {showAuthMenu && (
+          <div className="absolute right-0 mt-2 py-1 w-48 bg-white rounded-lg shadow-xl z-50">
+            <Link
+              to="/login"
+              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+              onClick={() => setShowAuthMenu(false)}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Login
+            </Link>
+            <Link
+              to="/signup"
+              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+              onClick={() => setShowAuthMenu(false)}
+            >
+              <User className="h-4 w-4 mr-2" />
+              Sign Up
+            </Link>
+          </div>
+        )}
       </div>
     );
   };

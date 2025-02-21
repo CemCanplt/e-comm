@@ -38,16 +38,18 @@ function Shop() {
       : products.filter(({ category }) => category === selectedCategory);
 
   // Price range change handler
-  const handlePriceRangeChange = ({ target: { value, name } }) => {
-    const parsedValue = parseInt(value);
-    const newValues = [
-      name === "min" ? Math.min(parsedValue, priceValues[1]) : priceValues[0],
-      name === "max" ? Math.max(parsedValue, priceValues[0]) : priceValues[1],
-    ];
+  const handlePriceRangeChange = (e) => {
+    const value = parseInt(e.target.value);
+    const index = e.target.name === "min" ? 0 : 1;
+    const newValues = priceValues.map((v, i) => (i === index ? value : v));
 
-    setPriceValues(newValues);
-    dispatch(setPriceRange(newValues));
-    dispatch(filterProducts());
+    if (newValues[0] > newValues[1]) {
+      newValues[index] = priceValues[index];
+    } else {
+      setPriceValues(newValues);
+      dispatch(setPriceRange(newValues));
+      dispatch(filterProducts());
+    }
   };
 
   // Category change handler
@@ -70,7 +72,7 @@ function Shop() {
       {/* Mobile Filter Button */}
       <div className="md:hidden mb-4">
         <button
-          onClick={() => setShowFilters(!showFilters)}
+          onClick={() => setShowFilters((prev) => !prev)}
           className="flex items-center justify-center w-full py-2 px-4 bg-gray-100 rounded-lg text-gray-700 font-medium"
         >
           <Filter className="w-5 h-5 mr-2" />
@@ -89,22 +91,23 @@ function Shop() {
             {/* Categories */}
             <div>
               <h3 className="font-bold text-gray-900 mb-3">Categories</h3>
-              <div className="space-y-2">
+              <ul className="list-none">
                 {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => handleCategoryChange(category)}
-                    className={`block w-full text-left px-3 py-2 rounded-lg 
-                    ${
-                      selectedCategory === category
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {category}
-                  </button>
+                  <li key={category}>
+                    <button
+                      onClick={() => handleCategoryChange(category)}
+                      className={`block w-full text-left px-3 py-2 rounded-lg 
+                      ${
+                        selectedCategory === category
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
             {/* Price Range */}
