@@ -138,14 +138,12 @@ function ProductDetail() {
           {/* Price */}
           <div className="flex items-center gap-4">
             {product.discount ? (
-              <>
-                <span className="text-3xl text-red-600 font-bold">
-                  ${product.discount}
-                </span>
-                <span className="text-xl text-gray-400 line-through">
+              <span className="text-3xl font-bold">
+                ${product.discount}
+                <span className="text-xl text-gray-400 line-through ml-2">
                   ${product.price}
                 </span>
-              </>
+              </span>
             ) : (
               <span className="text-3xl text-gray-900 font-bold">
                 ${product.price}
