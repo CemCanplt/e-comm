@@ -28,6 +28,7 @@ export const refreshUserData = () => {
       dispatch(setUser(response.data));
     } catch (error) {
       console.error("Failed to refresh user data:", error);
+      dispatch(logout());
     }
   };
 };
@@ -94,27 +95,21 @@ export const autoLogin = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Set the token into axios header without Bearer prefix
-    axios.defaults.headers.common["Authorization"] = token;
-
     try {
+      // Token doğrulama
       const response = await axios.get(
-        "https://workintech-fe-ecommerce.onrender.com/verify"
+        "https://workintech-fe-ecommerce.onrender.com/verify",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      // Assuming the response contains a new token and user info
-      const { token: newToken, ...userData } = response.data;
 
-      // Renew the token if provided; otherwise keep the existing token
-      const updatedToken = newToken || token;
-      axios.defaults.headers.common["Authorization"] = updatedToken;
-      localStorage.setItem("token", updatedToken);
-
-      // Dispatch the user information to update the reducer
-      dispatch(setUser(userData));
+      // Token geçerliyse user bilgilerini çek
+      dispatch(setToken(token));
+      dispatch(refreshUserData());
     } catch (error) {
-      // If verification fails, remove the token and reset authentication
-      localStorage.removeItem("token");
-      delete axios.defaults.headers.common["Authorization"];
       dispatch(logout());
     }
   };

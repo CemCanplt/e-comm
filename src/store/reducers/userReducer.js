@@ -11,14 +11,9 @@ const storedToken =
   localStorage.getItem("token") || sessionStorage.getItem("token");
 
 const initialState = {
-  user: storedUser,
-  addressList: [],
-  creditCards: [],
-  roles: [],
-  theme: "light",
-  language: "en",
-  token: storedToken,
-  isAuthenticated: !!storedToken,
+  user: null,
+  token: localStorage.getItem("token") || null,
+  isAuthenticated: false,
   loading: false,
   error: null,
 };
