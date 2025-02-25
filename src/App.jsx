@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { autoLogin } from "./store/actions/userActions";
 import AboutUsPage from "./components/content/AboutUsPage";
+import ShoppingCart from "./components/ShoppingCart";
 
 function App() {
   const dispatch = useDispatch();
@@ -40,6 +41,8 @@ function App() {
           <Route path="/contact" component={Contact} />
           <Route path="/team" component={Team} />
           <Route path="/aboutUs" component={AboutUsPage} />
+          <Route path="/cart" component={ShoppingCart} />
+          
 
           <Route path="*" component={() => <h1>404 Not Found</h1>} />
         </Switch>

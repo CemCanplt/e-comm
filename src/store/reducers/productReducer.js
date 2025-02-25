@@ -13,6 +13,12 @@ const initialState = {
     current: [0, 1000],
   },
   fetchState: "NOT_FETCHED", // "NOT_FETCHED" , "FETCHING", "FETCHED", "FAILED"
+
+  // Add new state properties for single product
+  singleProduct: null,
+  singleProductLoading: false,
+  singleProductError: null,
+  relatedProducts: [],
 };
 
 // Action Types
@@ -27,6 +33,12 @@ export const PRODUCT_ACTIONS = {
   SET_SORT_BY: "SET_SORT_BY",
   SET_PRICE_RANGE: "SET_PRICE_RANGE",
   FILTER_PRODUCTS: "FILTER_PRODUCTS",
+
+  // Add new action types
+  SET_SINGLE_PRODUCT: "SET_SINGLE_PRODUCT",
+  SET_SINGLE_PRODUCT_LOADING: "SET_SINGLE_PRODUCT_LOADING",
+  SET_SINGLE_PRODUCT_ERROR: "SET_SINGLE_PRODUCT_ERROR",
+  SET_RELATED_PRODUCTS: "SET_RELATED_PRODUCTS",
 };
 
 // Action Creators
@@ -125,6 +137,17 @@ const productReducer = (state = initialState, action) => {
         ...state,
         filteredProducts: filteredList,
       };
+
+    // Add new cases for single product handling
+    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT:
+      return { ...state, singleProduct: action.payload };
+    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT_LOADING:
+      return { ...state, singleProductLoading: action.payload };
+    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT_ERROR:
+      return { ...state, singleProductError: action.payload };
+    case PRODUCT_ACTIONS.SET_RELATED_PRODUCTS:
+      return { ...state, relatedProducts: action.payload };
+
     default:
       return state;
   }
