@@ -9,6 +9,7 @@ import {
   logout,
   USER_ACTIONS, // USER_ACTIONS'ı da import ediyoruz
 } from "../reducers/userReducer";
+import { setCategories } from "../reducers/productReducer";
 
 export const refreshUserData = () => {
   return async (dispatch, getState) => {
@@ -111,6 +112,20 @@ export const autoLogin = () => {
       dispatch(refreshUserData());
     } catch (error) {
       dispatch(logout());
+    }
+  };
+};
+
+// Fetch categories thunk action
+export const fetchCategories = () => {
+  return async (dispatch) => {
+    try {
+      const response = await axios.get(
+        "https://workintech-fe-ecommerce.onrender.com/categories"
+      );
+      dispatch(setCategories(response.data));
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
     }
   };
 };

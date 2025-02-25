@@ -31,6 +31,11 @@ function App() {
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
           <Route exact path="/shop" component={Shop} />
+          <Route path="/shop/:gender" component={Shop} />
+          <Route
+            path="/shop/:gender/:categoryName/:categoryId"
+            component={Shop}
+          />
           <Route path="/shop/product/:id" component={ProductDetail} />
           <Route path="/contact" component={Contact} />
           <Route path="/team" component={Team} />

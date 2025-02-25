@@ -1,66 +1,62 @@
-import {
-  Search,
-  ShoppingCart,
-  User,
-  Menu,
-  X,
-  LogOut,
-  // ChevronDown,
-} from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/reducers/userReducer";
-import { refreshUserData } from "../store/actions/userActions";
+import { refreshUserData, fetchCategories } from "../store/actions/userActions";
 
 function Header() {
-  // State management
-  const [isOpen, setIsOpen] = useState(false); // Mobile menu state
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // User dropdown state
-  const [showAuthMenu, setShowAuthMenu] = useState(false); // Auth menu visibility
-
-  // Refs for click outside detection
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showAuthMenu, setShowAuthMenu] = useState(false);
   const dropdownRef = useRef(null);
   const authMenuRef = useRef(null);
-
-  // Redux hooks
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.user);
+  const { categories } = useSelector((state) => state.categories);
 
-  // Toggle mobile menu
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
   const toggleMenu = () => setIsOpen(!isOpen);
-
-  // Handle user logout
   const handleLogout = () => {
     dispatch(logout());
     setIsDropdownOpen(false);
   };
 
-  // Close dropdown when clicking outside
+  // Group categories by gender
+  const categoriesByGender = categories
+    ? categories.reduce((acc, category) => {
+        const gender = category.gender === "k" ? "kadin" : "erkek";
+        if (!acc[gender]) {
+          acc[gender] = [];
+        }
+        acc[gender].push(category);
+        return acc;
+      }, {})
+    : {};
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close auth menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (authMenuRef.current && !authMenuRef.current.contains(event.target)) {
         setShowAuthMenu(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Sayfa yüklendiğinde kullanıcı bilgilerini yenile
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -68,7 +64,6 @@ function Header() {
     }
   }, [dispatch]);
 
-  // Render authenticated user section
   const renderAuthenticatedSection = () => (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -76,7 +71,7 @@ function Header() {
         className="flex items-center space-x-2 focus:outline-none"
       >
         {user?.avatar ? (
-          !user.avatar.includes("identicon") ? ( // Gravatar URL'i henüz yüklenmemişse
+          !user.avatar.includes("identicon") ? (
             <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
               <User className="h-6 w-6 text-gray-400" />
             </div>
@@ -84,8 +79,7 @@ function Header() {
             <img
               src={user.avatar}
               alt={user.name}
-              className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent 
-              hover:ring-blue-500 transition-all duration-200"
+              className="h-8 w-8 rounded-full ring-2 ring-offset-2 ring-transparent hover:ring-blue-500 transition-all duration-200"
             />
           )
         ) : (
@@ -93,8 +87,6 @@ function Header() {
         )}
         <span className="text-gray-700 hidden md:block">{user?.name}</span>
       </button>
-
-      {/* User Dropdown Menu */}
       {isDropdownOpen && (
         <div className="absolute right-0 mt-2 py-2 min-w-48 max-w-md bg-white rounded-lg shadow-xl z-50">
           <div className="px-4 py-2 border-b">
@@ -105,8 +97,7 @@ function Header() {
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
-            hover:bg-gray-100 space-x-2"
+            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 space-x-2"
           >
             <LogOut className="h-4 w-4 flex-shrink-0" />
             <span>Sign out</span>
@@ -116,15 +107,12 @@ function Header() {
     </div>
   );
 
-  // Render non-authenticated section
   const renderAuthSection = () => {
     if (isAuthenticated) {
       return renderAuthenticatedSection();
     }
-
     return (
       <div className="relative" ref={authMenuRef}>
-        {/* User Icon Button */}
         <button
           className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
           aria-label="Authentication menu"
@@ -132,8 +120,6 @@ function Header() {
         >
           <User className="h-6 w-6 text-gray-600 hover:text-gray-900" />
         </button>
-
-        {/* Auth Dropdown Menu */}
         {showAuthMenu && (
           <div className="absolute right-0 mt-2 py-1 w-48 bg-white rounded-lg shadow-xl z-50">
             <Link
@@ -160,16 +146,12 @@ function Header() {
 
   return (
     <>
-      {/* Main Header */}
       <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center">
-        {/* Left Section */}
         <div className="flex-1 flex justify-start">
           <Link to="/" className="text-xl font-bold text-(--Bandage-Rengi)">
             Bandage
           </Link>
         </div>
-
-        {/* Center Section - Navigation */}
         <nav className="flex-1 hidden md:flex items-center justify-center space-x-6">
           <Link
             to="/"
@@ -189,21 +171,98 @@ function Header() {
           >
             Pricing
           </a>
-          <Link // Changed from <a> to <Link>
-            to="/contact" // Added to prop
+          <Link
+            to="/contact"
             className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
           >
             Contact
           </Link>
-        </nav>
+          <div className="relative group" ref={dropdownRef}>
+            <button
+              className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
+              onMouseEnter={() => setIsDropdownOpen(true)}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              Categories
+            </button>
+            {isDropdownOpen && (
+              <div
+                className="absolute left-0 mt-2 py-2 w-64 bg-white rounded-lg shadow-xl z-50"
+                onMouseEnter={() => setIsDropdownOpen(true)}
+                onMouseLeave={() => setIsDropdownOpen(false)}
+              >
+                {/* Gender categories */}
+                <div className="flex">
+                  {/* Men's categories */}
+                  <div className="w-1/2 border-r">
+                    <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
+                      Erkek
+                    </h3>
+                    <div className="py-1">
+                      {categoriesByGender.erkek?.map((category) => (
+                        <Link
+                          key={category.id}
+                          to={`/shop/erkek/${category.title.toLowerCase()}/${
+                            category.id
+                          }`}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsDropdownOpen(false)}
+                        >
+                          {category.title}
+                        </Link>
+                      ))}
+                      {!categoriesByGender.erkek?.length && (
+                        <p className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Women's categories */}
+                  <div className="w-1/2">
+                    <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
+                      Kadın
+                    </h3>
+                    <div className="py-1">
+                      {categoriesByGender.kadin?.map((category) => (
+                        <Link
+                          key={category.id}
+                          to={`/shop/kadin/${category.title.toLowerCase()}/${
+                            category.id
+                          }`}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsDropdownOpen(false)}
+                        >
+                          {category.title}
+                        </Link>
+                      ))}
+                      {!categoriesByGender.kadin?.length && (
+                        <p className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-        {/* Right Section */}
+                {/* View all categories link */}
+                <div className="mt-2 pt-1 border-t">
+                  <Link
+                    to="/shop"
+                    className="block px-4 py-2 text-sm text-center font-medium text-blue-600 hover:bg-gray-100"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    View All Categories
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </nav>
         <div className="flex-1 flex items-center justify-end space-x-4">
           {renderAuthSection()}
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
           <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
-
-          {/* Mobile Menu Toggle */}
           {isOpen ? (
             <X
               onClick={toggleMenu}
@@ -217,8 +276,6 @@ function Header() {
           )}
         </div>
       </header>
-
-      {/* Mobile Navigation Menu */}
       <nav
         className={`${
           isOpen ? "block" : "hidden"
@@ -228,8 +285,7 @@ function Header() {
           <li>
             <Link
               to="/"
-              className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
-              hover:bg-gray-100"
+              className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold hover:bg-gray-100"
               onClick={toggleMenu}
             >
               Home
@@ -254,8 +310,8 @@ function Header() {
             </a>
           </li>
           <li>
-            <Link // Changed from <a> to <Link>
-              to="/contact" // Added to prop
+            <Link
+              to="/contact"
               className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold hover:bg-gray-100"
               onClick={toggleMenu}
             >
@@ -267,8 +323,7 @@ function Header() {
               <li>
                 <Link
                   to="/login"
-                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
-                  hover:bg-gray-100"
+                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
                   Login
@@ -277,8 +332,7 @@ function Header() {
               <li>
                 <Link
                   to="/signup"
-                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold 
-                  hover:bg-gray-100"
+                  className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
                   Sign Up
