@@ -5,9 +5,8 @@ import {
   setSortBy,
   setPriceRange,
   filterProducts,
-  setProductList,
 } from "../store/reducers/productReducer";
-import { mockProducts } from "../data/mockProducts";
+import { fetchProducts } from "../store/actions/productActions";
 import { useHistory, useParams } from "react-router-dom";
 import { fetchCategories } from "../store/actions/categoryActions";
 
@@ -40,19 +39,21 @@ const ProductCard = ({ product, viewMode, onClick }) => (
     }`}
   >
     <img
-      src={product.image}
+      src={
+        product.image || "https://placehold.co/300x300/gray/white?text=No+Image"
+      }
       alt={product.name}
       className={`${viewMode === "list" ? "w-48" : "w-full h-48"} object-cover`}
     />
     <div className="p-4 flex-1">
       <h3 className="font-bold text-gray-900">{product.name}</h3>
-      <p className="text-gray-600">{product.category}</p>
+      <p className="text-gray-600">{product.category || "Uncategorized"}</p>
       <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {product.discount ? (
+          {product.discount_price ? (
             <>
               <span className="text-red-600 font-bold">
-                ${product.discount}
+                ${product.discount_price}
               </span>
               <span className="text-gray-400 line-through">
                 ${product.price}
@@ -63,7 +64,7 @@ const ProductCard = ({ product, viewMode, onClick }) => (
           )}
         </div>
         <div className="text-yellow-400">
-          {"★".repeat(Math.floor(product.rating))}
+          {"★".repeat(Math.floor(product.rating || 0))}
         </div>
       </div>
     </div>
@@ -74,10 +75,11 @@ function Shop() {
   const dispatch = useDispatch();
   const history = useHistory();
   const { gender, categoryId } = useParams();
-  const { productList, sortBy, priceRange, filteredProducts } = useSelector(
-    (state) => state.product
+  const { productList, sortBy, priceRange, filteredProducts, fetchState } =
+    useSelector((state) => state.product);
+  const { categories, loading: categoriesLoading } = useSelector(
+    (state) => state.categories
   );
-  const { categories, loading } = useSelector((state) => state.categories);
 
   // State
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -89,9 +91,12 @@ function Shop() {
   ]);
   const [selectedGenderFilter, setSelectedGenderFilter] = useState("all");
 
+  // Check if products are loading
+  const isProductsLoading = fetchState === "FETCHING";
+
   // Fetch data on mount
   useEffect(() => {
-    dispatch(setProductList(mockProducts));
+    dispatch(fetchProducts());
     dispatch(fetchCategories());
   }, [dispatch]);
 
@@ -134,7 +139,7 @@ function Shop() {
     selectedCategory === "All"
       ? filteredProducts || productList
       : (filteredProducts || productList).filter(
-          (p) => p.category === selectedCategory
+          (p) => p.category_id === parseInt(selectedCategory)
         );
 
   return (
@@ -161,7 +166,7 @@ function Shop() {
         </div>
 
         {/* Categories */}
-        {loading ? (
+        {categoriesLoading ? (
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             <p className="mt-2">Loading categories...</p>
@@ -220,7 +225,7 @@ function Shop() {
                     All Categories
                   </button>
                 </li>
-                {loading ? (
+                {categoriesLoading ? (
                   <li className="px-3 py-2">Loading categories...</li>
                 ) : (
                   categories.map((category) => (
@@ -333,7 +338,12 @@ function Shop() {
           </div>
 
           {/* Products */}
-          {displayedProducts.length === 0 ? (
+          {isProductsLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-600">Loading products...</p>
+            </div>
+          ) : displayedProducts.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-gray-500">
                 No products found with the current filters.

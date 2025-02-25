@@ -1,6 +1,7 @@
 const initialState = {
   categories: [],
   productList: [],
+  filteredProducts: null,
   total: 0,
   limit: 25,
   offset: 0,
@@ -84,7 +85,12 @@ const productReducer = (state = initialState, action) => {
     case PRODUCT_ACTIONS.SET_CATEGORIES:
       return { ...state, categories: action.payload };
     case PRODUCT_ACTIONS.SET_PRODUCT_LIST:
-      return { ...state, productList: action.payload };
+      return {
+        ...state,
+        productList: action.payload,
+        // Reset filtered products when we get a new product list
+        filteredProducts: null,
+      };
     case PRODUCT_ACTIONS.SET_TOTAL:
       return { ...state, total: action.payload };
     case PRODUCT_ACTIONS.SET_FETCH_STATE:
@@ -135,7 +141,9 @@ const sortProducts = (products, sortType) => {
       return productsCopy.sort((a, b) => b.price - a.price);
     case "newest":
       return productsCopy.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        (a, b) =>
+          new Date(b.created_at || b.createdAt) -
+          new Date(a.created_at || a.createdAt)
       );
     default: // featured
       return productsCopy;
