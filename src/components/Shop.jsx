@@ -88,7 +88,49 @@ const ProductCard = ({ product, viewMode, onClick }) => {
           className="w-full h-48 object-cover"
         />
       </div>
-      {/* Diğer içerikler değişmeden kalır */}
+
+      {/* Product information container */}
+      <div className={`p-4 ${viewMode === "list" ? "w-2/3" : ""}`}>
+        <h3 className="font-medium text-gray-900 mb-2 truncate">
+          {product.name}
+        </h3>
+
+        {/* Flex container for rating and price information */}
+        <div className="flex justify-between items-center">
+          
+          {/* Price information */}
+          <div>
+            {product.discount_price ? (
+              <div className="flex items-center gap-2">
+                <span className="text-red-600 font-bold">
+                  ${product.discount_price}
+                </span>
+                <span className="text-gray-400 line-through text-sm">
+                  ${product.price}
+                </span>
+              </div>
+            ) : (
+              <span className="font-bold">${product.price}</span>
+            )}
+          </div>
+
+          {/* Star rating */}
+          <div className="flex items-center">
+            <div className="text-yellow-400 text-sm">
+              {"★".repeat(Math.floor(product.rating || 0))}
+            </div>
+            <span className="text-xs text-gray-600 ml-1">
+              ({product.rating || 0})
+            </span>
+          </div>
+        </div>
+
+        {viewMode === "list" && product.description && (
+          <p className="text-gray-600 mt-2 text-sm line-clamp-2">
+            {product.description}
+          </p>
+        )}
+      </div>
     </div>
   );
 };
