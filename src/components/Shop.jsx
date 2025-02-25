@@ -16,7 +16,7 @@ import {
   filterProducts,
 } from "../store/reducers/productReducer";
 import { fetchProducts } from "../store/actions/productActions";
-import { useHistory, useParams } from "react-router-dom";
+import { Link, useHistory, useParams } from "react-router-dom";
 import { fetchCategories } from "../store/actions/categoryActions";
 
 // Category Card Component
@@ -52,7 +52,10 @@ const CategoryCard = ({ category, onClick }) => (
 
 // Product Card Component
 const ProductCard = ({ product, viewMode, onClick }) => {
-  // Resim URL'sini al (images array ise ilk elemanın URL'sini, değilse doğrudan image alanını)
+  // Get history object for navigation
+  const history = useHistory();
+
+  // Existing getImageUrl function
   const getImageUrl = () => {
     if (product.images && Array.isArray(product.images)) {
       // Images bir array ise ve içinde objeler varsa
@@ -72,12 +75,32 @@ const ProductCard = ({ product, viewMode, onClick }) => {
     return "https://placehold.co/300x300/gray/white?text=No+Image";
   };
 
+  // Yönlendirme işlevi - sorunun asıl çözümü burada
+  const handleProductClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Önce konsola URL'i yazdıralım
+    const productUrl = `/shop/product/${product.id}`;
+    console.log("Navigating to:", productUrl);
+
+    // Doğrudan window.location kullanarak yönlendirme yapalım
+    window.location.href = productUrl;
+
+    // onClick callback'ini çağıralım
+    if (onClick) {
+      onClick(product);
+    }
+  };
+
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md ${
+      className={`block bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md ${
         viewMode === "list" ? "flex" : ""
       }`}
-      onClick={onClick}
+      onClick={handleProductClick}
+      role="button"
+      aria-label={`View ${product.name} details`}
     >
       <div
         className={`${viewMode === "list" ? "w-1/3" : "aspect-w-1 aspect-h-1"}`}
@@ -97,7 +120,6 @@ const ProductCard = ({ product, viewMode, onClick }) => {
 
         {/* Flex container for rating and price information */}
         <div className="flex justify-between items-center">
-          
           {/* Price information */}
           <div>
             {product.discount_price ? (
@@ -637,9 +659,10 @@ function Shop() {
                       key={product.id}
                       product={product}
                       viewMode={viewMode}
-                      onClick={() =>
-                        history.push(`/shop/product/${product.id}`)
-                      }
+                      onClick={(product) => {
+                        console.log("Clicked product:", product.id);
+                        // No need to call history.push here, it's handled in the component
+                      }}
                     />
                   ))}
                 </div>

@@ -344,16 +344,16 @@ function ProductDetail() {
                 </div>
 
                 {/* Price */}
-                <div className="flex items-center gap-2">
+                <div className="mb-4">
                   {product.discount_price ? (
-                    <>
+                    <div className="flex items-center gap-3">
                       <span className="text-2xl text-red-600 font-bold">
                         ${product.discount_price}
                       </span>
-                      <span className="text-gray-400 line-through">
+                      <span className="text-sm text-gray-400 line-through">
                         ${product.price}
                       </span>
-                    </>
+                    </div>
                   ) : (
                     <span className="text-2xl text-gray-900 font-bold">
                       ${product.price}
@@ -364,16 +364,16 @@ function ProductDetail() {
                 {/* Product Actions */}
                 <div className="space-y-4">
                   {/* Quantity */}
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Quantity:
                     </label>
-                    <div className="flex items-center border rounded-md">
+                    <div className="flex items-center justify-center border rounded-md bg-white shadow-sm">
                       <button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="px-3 py-2 hover:bg-gray-100"
+                        className="w-12 py-2.5 flex items-center justify-center text-gray-600 hover:bg-gray-100 font-medium"
                       >
-                        -
+                        <span className="text-center">-</span>
                       </button>
                       <input
                         type="number"
@@ -383,14 +383,14 @@ function ProductDetail() {
                             Math.max(1, parseInt(e.target.value) || 1)
                           )
                         }
-                        className="w-12 text-center border-x px-0 py-2"
+                        className="w-16 text-center border-x px-0 py-2.5 text-gray-800"
                         min="1"
                       />
                       <button
                         onClick={() => setQuantity(quantity + 1)}
-                        className="px-3 py-2 hover:bg-gray-100"
+                        className="w-12 py-2.5 flex items-center justify-center text-gray-600 hover:bg-gray-100 font-medium"
                       >
-                        +
+                        <span className="text-center">+</span>
                       </button>
                     </div>
                   </div>
@@ -409,9 +409,9 @@ function ProductDetail() {
           </div>
 
           {/* Desktop View */}
-          <div className="hidden md:grid grid-cols-2 gap-8 p-8">
+          <div className="hidden md:flex flex-wrap p-8">
             {/* Left Column - Images */}
-            <div className="space-y-6">
+            <div className="w-full md:w-1/2 pr-4 space-y-6">
               {/* Main product image */}
               <div className="aspect-w-4 aspect-h-3 bg-gray-50 rounded-lg overflow-hidden">
                 <img
@@ -422,12 +422,12 @@ function ProductDetail() {
               </div>
 
               {/* Image gallery */}
-              <div className="grid grid-cols-5 gap-3">
+              <div className="flex flex-wrap gap-3">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => handleImageChange(index)}
-                    className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2
+                    className={`flex-grow-0 flex-shrink-0 basis-[calc(20%-0.6rem)] aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2
                     ${
                       selectedImage === index
                         ? "border-blue-500"
@@ -445,7 +445,7 @@ function ProductDetail() {
             </div>
 
             {/* Right Column - Product Info */}
-            <div className="space-y-6">
+            <div className="w-full md:w-1/2 pl-4 space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
                   {product.name}
@@ -496,9 +496,9 @@ function ProductDetail() {
                 <span>In Stock</span>
               </div>
 
-              <div className="border-t border-b py-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border-t border-b py-6 flex items-end justify-center flex-wrap">
                 {/* Quantity Selector */}
-                <div>
+                <div className="w-full md:w-1/2 md:pr-2 mb-4 md:mb-0">
                   <label className="block text-gray-700 mb-2">Quantity:</label>
                   <div className="flex items-center border rounded-md">
                     <button
@@ -526,24 +526,26 @@ function ProductDetail() {
                 </div>
 
                 {/* Add to Cart Button */}
-                <button
-                  onClick={handleAddToCart}
-                  className="w-full py-3 px-8 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
-                >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Add to Cart
-                </button>
+                <div className="w-full md:w-1/2 md:pl-2">
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full py-3 px-8 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  >
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    Add to Cart
+                  </button>
+                </div>
               </div>
 
               {/* Shipping & Returns Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center">
+              <div className="flex flex-wrap">
+                <div className="w-full md:w-1/2 flex items-center mb-2 md:mb-0">
                   <Truck className="w-5 h-5 text-gray-400 mr-2" />
                   <span className="text-sm text-gray-600">
                     Free shipping over $50
                   </span>
                 </div>
-                <div className="flex items-center">
+                <div className="w-full md:w-1/2 flex items-center">
                   <Shield className="w-5 h-5 text-gray-400 mr-2" />
                   <span className="text-sm text-gray-600">
                     30 days return policy
@@ -592,26 +594,26 @@ function ProductDetail() {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                   Product Specifications
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border-b py-3">
+                <div className="flex flex-wrap">
+                  <div className="w-full md:w-1/2 pr-2 border-b py-3">
                     <span className="font-medium text-gray-700">Brand:</span>
                     <span className="float-right text-gray-600">
                       {product.brand || "Unknown"}
                     </span>
                   </div>
-                  <div className="border-b py-3">
+                  <div className="w-full md:w-1/2 pl-2 border-b py-3">
                     <span className="font-medium text-gray-700">Material:</span>
                     <span className="float-right text-gray-600">
                       Premium Quality
                     </span>
                   </div>
-                  <div className="border-b py-3">
+                  <div className="w-full md:w-1/2 pr-2 border-b py-3">
                     <span className="font-medium text-gray-700">Category:</span>
                     <span className="float-right text-gray-600">
                       {product.category || "Uncategorized"}
                     </span>
                   </div>
-                  <div className="border-b py-3">
+                  <div className="w-full md:w-1/2 pl-2 border-b py-3">
                     <span className="font-medium text-gray-700">Stock:</span>
                     <span className="float-right text-gray-600">Available</span>
                   </div>
@@ -644,9 +646,14 @@ function ProductDetail() {
         {relatedProducts.length > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex flex-wrap -mx-3">
               {relatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <div
+                  key={product.id}
+                  className="w-full sm:w-1/2 lg:w-1/4 px-3 mb-6"
+                >
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           </div>
