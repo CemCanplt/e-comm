@@ -1,9 +1,18 @@
-import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  LogOut,
+  Loader,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/reducers/userReducer";
-import { refreshUserData, fetchCategories } from "../store/actions/userActions";
+import { refreshUserData } from "../store/actions/userActions";
+import { fetchCategories } from "../store/actions/categoryActions";
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +22,9 @@ function Header() {
   const authMenuRef = useRef(null);
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.user);
-  const { categories } = useSelector((state) => state.categories);
+  const { categories, loading: categoriesLoading } = useSelector(
+    (state) => state.categories
+  );
 
   // Cart dropdown functionality
   const [showCartDropdown, setShowCartDropdown] = useState(false);
@@ -85,6 +96,13 @@ function Header() {
       dispatch(refreshUserData());
     }
   }, [dispatch]);
+
+  // Dropdown açıldığında kategorileri yükle
+  useEffect(() => {
+    if (isDropdownOpen && (!categories || categories.length === 0)) {
+      dispatch(fetchCategories());
+    }
+  }, [isDropdownOpen, dispatch, categories]);
 
   const renderAuthenticatedSection = () => (
     <div className="relative" ref={dropdownRef}>
@@ -279,7 +297,12 @@ function Header() {
           <div className="relative group" ref={dropdownRef}>
             <button
               className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
-              onMouseEnter={() => setIsDropdownOpen(true)}
+              onMouseEnter={() => {
+                setIsDropdownOpen(true);
+                if (!categories || categories.length === 0) {
+                  dispatch(fetchCategories());
+                }
+              }}
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               Categories
@@ -291,69 +314,82 @@ function Header() {
                 onMouseLeave={() => setIsDropdownOpen(false)}
               >
                 {/* Gender categories */}
-                <div className="flex">
-                  {/* Men's categories */}
-                  <div className="w-1/2 border-r">
-                    <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
-                      Erkek
-                    </h3>
-                    <div className="py-1">
-                      {categoriesByGender.erkek?.map((category) => (
-                        <Link
-                          key={category.id}
-                          to={`/shop/erkek/${category.title.toLowerCase()}/${
-                            category.id
-                          }`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          {category.title}
-                        </Link>
-                      ))}
-                      {!categoriesByGender.erkek?.length && (
-                        <p className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </p>
-                      )}
-                    </div>
+                {categoriesLoading ? (
+                  <div className="px-4 py-8 text-center">
+                    <Loader className="h-6 w-6 mx-auto animate-spin text-blue-600" />
+                    <p className="mt-2 text-sm text-gray-500">
+                      Loading categories...
+                    </p>
                   </div>
-                  {/* Women's categories */}
-                  <div className="w-1/2">
-                    <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
-                      Kadın
-                    </h3>
-                    <div className="py-1">
-                      {categoriesByGender.kadin?.map((category) => (
-                        <Link
-                          key={category.id}
-                          to={`/shop/kadin/${category.title.toLowerCase()}/${
-                            category.id
-                          }`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          {category.title}
-                        </Link>
-                      ))}
-                      {!categoriesByGender.kadin?.length && (
-                        <p className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </p>
-                      )}
+                ) : (
+                  <>
+                    <div className="flex">
+                      {/* Men's categories */}
+                      <div className="w-1/2 border-r">
+                        <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
+                          Erkek
+                        </h3>
+                        <div className="py-1">
+                          {categoriesByGender.erkek?.length > 0 ? (
+                            categoriesByGender.erkek.map((category) => (
+                              <Link
+                                key={category.id}
+                                to={`/shop/erkek/${category.title.toLowerCase()}/${
+                                  category.id
+                                }`}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                onClick={() => setIsDropdownOpen(false)}
+                              >
+                                {category.title}
+                              </Link>
+                            ))
+                          ) : (
+                            <p className="px-4 py-2 text-sm text-gray-500">
+                              Kategori bulunamadı
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {/* Women's categories */}
+                      <div className="w-1/2">
+                        <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
+                          Kadın
+                        </h3>
+                        <div className="py-1">
+                          {categoriesByGender.kadin?.length > 0 ? (
+                            categoriesByGender.kadin.map((category) => (
+                              <Link
+                                key={category.id}
+                                to={`/shop/kadin/${category.title.toLowerCase()}/${
+                                  category.id
+                                }`}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                onClick={() => setIsDropdownOpen(false)}
+                              >
+                                {category.title}
+                              </Link>
+                            ))
+                          ) : (
+                            <p className="px-4 py-2 text-sm text-gray-500">
+                              Kategori bulunamadı
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* View all categories link */}
-                <div className="mt-2 pt-1 border-t">
-                  <Link
-                    to="/shop"
-                    className="block px-4 py-2 text-sm text-center font-medium text-blue-600 hover:bg-gray-100"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    View All Categories
-                  </Link>
-                </div>
+                    {/* View all categories link */}
+                    <div className="mt-2 pt-1 border-t">
+                      <Link
+                        to="/shop"
+                        className="block px-4 py-2 text-sm text-center font-medium text-blue-600 hover:bg-gray-100"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        View All Categories
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
