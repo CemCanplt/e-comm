@@ -18,8 +18,8 @@ import { setCard } from "../store/reducers/shoppingCardReducer";
 import { toast } from "react-toastify";
 
 function ProductDetail() {
-  // Update to use the new URL parameters
-  const { gender, categoryName, id } = useParams();
+  // Update to use the correct URL parameters
+  const { gender, categorySlug, productId } = useParams();
   const history = useHistory();
   const dispatch = useDispatch();
   const { card } = useSelector((state) => state.shoppingCard);
@@ -38,7 +38,7 @@ function ProductDetail() {
       try {
         // Ürün verisini çek
         const response = await axios.get(
-          `https://workintech-fe-ecommerce.onrender.com/products/${id}`
+          `https://workintech-fe-ecommerce.onrender.com/products/${productId}`
         );
 
         const productData = response.data;
@@ -79,7 +79,7 @@ function ProductDetail() {
             const genderText = genderCode === "k" ? "kadin" : "erkek";
 
             // Doğru URL yolu (artık /product ile başlıyor)
-            const correctPath = `/product/${genderText}/${categorySlug}/${id}`;
+            const correctPath = `/product/${genderText}/${categorySlug}/${productId}`;
 
             // Eğer mevcut URL doğru değilse güncelle
             if (history.location.pathname !== correctPath) {
@@ -123,7 +123,9 @@ function ProductDetail() {
             `https://workintech-fe-ecommerce.onrender.com/products?category_id=${response.data.category_id}&limit=4`
           );
           setRelatedProducts(
-            relatedResponse.data.products.filter((p) => p.id !== parseInt(id))
+            relatedResponse.data.products.filter(
+              (p) => p.id !== parseInt(productId)
+            )
           );
         }
       } catch (err) {
@@ -138,7 +140,7 @@ function ProductDetail() {
     window.scrollTo(0, 0);
     setSelectedImage(0);
     setQuantity(1);
-  }, [id, history]);
+  }, [productId, history]);
 
   const handleAddToCard = () => {
     // Check if item is already in card

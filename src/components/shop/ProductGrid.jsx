@@ -1,31 +1,40 @@
-import React, { useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import LoadingSpinner from "../common/LoadingSpinner";
-import { useDispatch } from "react-redux";
 import { fetchProducts } from "../../store/actions/productActions";
 
 const ProductCard = ({ product, viewMode, onClick }) => {
-  // Get history object for navigation
   const history = useHistory();
+  const categories = useSelector((state) => state.categories.categories);
 
-  const getImageUrl = () => {
-    if (product.images && Array.isArray(product.images)) {
-      // Images bir array ise ve içinde objeler varsa
-      if (product.images[0] && product.images[0].url) {
-        return product.images[0].url;
-      }
-      // Images bir string array ise
-      if (typeof product.images[0] === "string") {
+  // Fix image handling
+  const getProductImage = (product) => {
+    if (!product)
+      return "https://placehold.co/300x300/gray/white?text=No+Image";
+
+    if (product.images) {
+      if (typeof product.images === "string") {
+        try {
+          return JSON.parse(product.images)[0];
+        } catch (e) {
+          return product.images;
+        }
+      } else if (Array.isArray(product.images)) {
+        if (product.images[0] && typeof product.images[0] === "object") {
+          return (
+            product.images[0].url ||
+            "https://placehold.co/300x300/gray/white?text=No+Image"
+          );
+        }
         return product.images[0];
       }
     }
-    // Single image string ise
-    if (product.image) {
-      return product.image;
-    }
-    // Hiçbiri yoksa placeholder
-    return "https://placehold.co/300x300/gray/white?text=No+Image";
+
+    return (
+      product.image || "https://placehold.co/300x300/gray/white?text=No+Image"
+    );
   };
 
   // Improved navigation function using React Router
@@ -36,7 +45,6 @@ const ProductCard = ({ product, viewMode, onClick }) => {
     // Bu kategori ID'sini kullanarak categoryInfo'yu al
     if (product.category_id) {
       // Redux'tan kategorileri al
-      const categories = store.getState().categories.categories;
       const category = categories.find((cat) => cat.id === product.category_id);
 
       if (category) {
@@ -49,7 +57,7 @@ const ProductCard = ({ product, viewMode, onClick }) => {
             .replace(/\s+/g, "-")
             .replace(/[^a-z0-9-]/g, "");
 
-        // URL oluştur - artık product ile başlayan URL
+        // URL oluştur - product ile başlayan URL
         const productUrl = `/product/${genderText}/${slug}/${product.id}`;
         console.log("Navigating to:", productUrl);
 
@@ -58,10 +66,8 @@ const ProductCard = ({ product, viewMode, onClick }) => {
         // Kategori bulunamadıysa fallback çözüm
         const gender = product.gender === "k" ? "kadin" : "erkek";
         const defaultSlug =
-          product.category
-            ?.toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "") || "kategori";
+          product.category?.toLowerCase().replace(/[^a-z0-9-]/g, "-") ||
+          "kategori";
 
         history.push(`/product/${gender}/${defaultSlug}/${product.id}`);
       }
@@ -88,7 +94,7 @@ const ProductCard = ({ product, viewMode, onClick }) => {
         className={`${viewMode === "list" ? "w-1/3" : "aspect-w-1 aspect-h-1"}`}
       >
         <img
-          src={getImageUrl()}
+          src={getProductImage(product)}
           alt={product.name}
           className="w-full h-48 object-cover"
         />

@@ -65,20 +65,47 @@ export const useShopFilters = ({
     (category) => {
       if (!category) return;
 
+      // "all" kategorisi için tüm ürünleri göster
       if (category.id === "all") {
+        setSelectedCategory("All");
         history.push("/shop");
+
+        // Tüm ürünleri getir
+        const params = {
+          limit: itemsPerPage,
+          offset: 0,
+        };
+        dispatch(fetchProducts(params));
         return;
       }
 
-      const gender = category.gender === "k" ? "kadin" : "erkek";
-      const categoryName = category.title
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "");
+      // Kategori ID'sini kullan
+      setSelectedCategory(category.id);
 
-      history.push(`/shop/${gender}/${categoryName}/${category.id}`);
+      // Cinsiyet belirle
+      const genderText = category.genderCode === "k" ? "kadin" : "erkek";
+
+      // Slug oluştur (varsa kullan, yoksa kategori adından oluştur)
+      const categorySlug =
+        category.slug ||
+        category.title
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "");
+
+      // URL oluştur
+      const categoryUrl = `/shop/${genderText}/${categorySlug}/${category.id}`;
+      history.push(categoryUrl);
+
+      // Ürünleri bu kategoriye göre filtrele
+      const params = {
+        limit: itemsPerPage,
+        offset: 0,
+        category_id: category.id,
+      };
+      dispatch(fetchProducts(params));
     },
-    [history]
+    [history, dispatch, itemsPerPage]
   );
 
   // Cinsiyet değişikliği için yönlendirme

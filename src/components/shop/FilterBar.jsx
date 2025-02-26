@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
 import { fetchProducts } from "../../store/actions/productActions";
 
 const FilterBar = ({
@@ -15,13 +15,22 @@ const FilterBar = ({
   handlePriceRangeChange,
   priceRange,
   dispatch,
-  filterProducts,
-  sortOption, // Add the missing sortOption prop
-  history,
+  sortOption,
   showFilters,
   resetFilters,
-  setShowFilters, // Add the missing setShowFilters prop
+  setShowFilters,
 }) => {
+  // Kategori seçim işleyicisini iyileştir
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category.id);
+    navigateToCategory(category);
+
+    // Mobil görünümde filtreleri kapat
+    if (window.innerWidth < 768) {
+      setShowFilters && setShowFilters(false);
+    }
+  };
+
   return (
     <aside
       className={`${
@@ -207,7 +216,7 @@ const FilterBar = ({
           {categories?.map((category) => (
             <li key={category.id}>
               <button
-                onClick={() => navigateToCategory(category)}
+                onClick={() => handleCategorySelect(category)}
                 className={`block w-full text-left px-3 py-2 text-sm rounded-md flex justify-between ${
                   selectedCategory === category.id
                     ? "bg-blue-50 text-blue-600"

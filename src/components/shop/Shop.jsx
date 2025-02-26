@@ -3,6 +3,7 @@ import { Filter } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { fetchCategories } from "../../store/actions/categoryActions";
+import { fetchProducts } from "../../store/actions/productActions";
 
 // Componentler
 import ShopBreadcrumb from "./ShopBreadcrumb";
@@ -37,7 +38,7 @@ function Shop() {
   // Custom hook ile filtreleme mantığı
   const {
     selectedCategory,
-    setSelectedCategory, // Bu satırın olduğundan emin olun
+    setSelectedCategory,
     selectedGenderFilter,
     filterText,
     setFilterText,
@@ -53,6 +54,7 @@ function Shop() {
     handlePriceRangeChange,
     resetFilters,
     handlePageChange,
+    itemsPerPage, // Hook'tan gelen değer
   } = useShopFilters({
     priceRange,
     gender,
@@ -78,6 +80,19 @@ function Shop() {
   useEffect(() => {
     fetchFilteredProducts();
   }, [fetchFilteredProducts]);
+
+  // Kategori değiştiğinde ürünleri güncelle
+  useEffect(() => {
+    if (selectedCategory && selectedCategory !== "All") {
+      const params = {
+        limit: itemsPerPage,
+        offset: 0,
+        category_id: parseInt(selectedCategory),
+      };
+
+      dispatch(fetchProducts(params));
+    }
+  }, [selectedCategory, dispatch, itemsPerPage]);
 
   // Görüntülenen ürünler
   const displayedProducts = filteredProducts || productList || [];
@@ -113,12 +128,19 @@ function Shop() {
             title={pageTitle}
           />
 
-          {/* Categories Grid */}
-          <CategoryGrid
-            categories={filteredCategories}
-            isLoading={categoriesLoading}
-            onCategoryClick={navigateToCategory}
-          />
+          {/* Categories Grid - sadece bir cinsiyet seçildiğinde göster */}
+          {selectedGenderFilter !== "all" && (
+            <div className="flex flex-col mt-6">
+              <h2 className="text-xl font-bold mb-4">Kategoriler</h2>
+              <div className="">
+                <CategoryGrid
+                  categories={filteredCategories}
+                  isLoading={categoriesLoading}
+                  onCategoryClick={navigateToCategory}
+                />
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Mobile filter button */}
@@ -132,6 +154,7 @@ function Shop() {
           </button>
         </div>
 
+        {/* Ana içerik bölümünü flex tasarımına taşı */}
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar filters */}
           <FilterBar
