@@ -46,8 +46,46 @@ export const fetchProducts = (params = {}) => {
         queryParams.append("filter", params.filter);
       }
 
+      // Handle sorting properly
       if (params.sort) {
-        queryParams.append("sort", params.sort);
+        // Store the sort value in the state for client-side sorting
+        dispatch({
+          type: PRODUCT_ACTIONS.SET_SORT_BY,
+          payload: params.sort,
+        });
+
+        // Map our sort parameters to API sort parameters if needed
+        let apiSortParam;
+        switch (params.sort) {
+          case "price:asc":
+            apiSortParam = "price";
+            break;
+          case "price:desc":
+            apiSortParam = "-price";
+            break;
+          case "rating:asc":
+            apiSortParam = "rating";
+            break;
+          case "rating:desc":
+            apiSortParam = "-rating";
+            break;
+          case "newest":
+            apiSortParam = "-created_at";
+            break;
+          case "name:asc":
+            apiSortParam = "name";
+            break;
+          case "name:desc":
+            apiSortParam = "-name";
+            break;
+          default:
+            // Don't add a sort parameter for "featured"
+            apiSortParam = null;
+        }
+
+        if (apiSortParam) {
+          queryParams.append("sort", apiSortParam);
+        }
       }
 
       if (params.limit) {
@@ -58,16 +96,38 @@ export const fetchProducts = (params = {}) => {
         queryParams.append("offset", params.offset);
       }
 
+      // Add price range filtering if provided
+      if (params.priceMin !== undefined) {
+        queryParams.append("price_min", params.priceMin);
+      }
+
+      if (params.priceMax !== undefined) {
+        queryParams.append("price_max", params.priceMax);
+      }
+
+      // Add gender filtering
+      if (params.gender) {
+        queryParams.append("gender", params.gender);
+      }
+
       const queryString = queryParams.toString();
       const url = `${API_URL}/products${queryString ? `?${queryString}` : ""}`;
 
       console.log("Fetching products from:", url);
       const response = await axios.get(url);
 
+      // After fetching, make sure to apply client-side sorting too
+      let products = response.data.products;
+
+      // Apply client-side sorting if params.sort is provided
+      if (params.sort) {
+        products = sortProducts(products, params.sort);
+      }
+
       // Update products in the store
       dispatch({
         type: PRODUCT_ACTIONS.SET_PRODUCTS,
-        payload: response.data.products,
+        payload: products,
       });
 
       // Update total count in the store
@@ -76,18 +136,28 @@ export const fetchProducts = (params = {}) => {
         payload: response.data.total,
       });
 
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      dispatch({
-        type: PRODUCT_ACTIONS.SET_PRODUCTS_ERROR,
-        payload: error.message,
-      });
-    } finally {
+      // Reset loading state
       dispatch({
         type: PRODUCT_ACTIONS.SET_PRODUCTS_LOADING,
         payload: false,
       });
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching products:", error);
+
+      dispatch({
+        type: PRODUCT_ACTIONS.SET_PRODUCTS_LOADING,
+        payload: false,
+      });
+
+      // Set fetch state to failed
+      dispatch({
+        type: PRODUCT_ACTIONS.SET_FETCH_STATE,
+        payload: "FAILED",
+      });
+
+      throw error;
     }
   };
 };

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Filter } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
-import { fetchCategories } from "../store/actions/categoryActions"; // Güncellendi
-import { fetchProducts } from "../store/actions/productActions"; // Güncellendi
+import { useParams, useLocation } from "react-router-dom"; // <-- Add useLocation import
+import { fetchCategories } from "../store/actions/categoryActions";
+import { fetchProducts } from "../store/actions/productActions";
 
-// Componentler - yeni yollar
+// Components
 import ShopBreadcrumb from "./shop/ShopBreadcrumb";
 import GenderFilter from "./shop/GenderFilter";
 import CategoryGrid from "./shop/CategoryGrid";
@@ -13,12 +13,13 @@ import FilterBar from "./shop/FilterBar";
 import ProductToolbar from "./shop/ProductToolbar";
 import ProductGrid from "./shop/ProductGrid";
 
-// Hooks - güncellendi
-import { useShopFilters } from "../hooks/useShopFilters"; // Güncellendi
+// Hooks
+import { useShopFilters } from "../hooks/useShopFilters";
 
 function Shop() {
   const dispatch = useDispatch();
   const { gender, categorySlug, categoryId } = useParams();
+  const location = useLocation(); // <-- Add this
 
   // Redux state'leri
   const { productList, priceRange, filteredProducts, fetchState, total } =
@@ -54,7 +55,7 @@ function Shop() {
     handlePriceRangeChange,
     resetFilters,
     handlePageChange,
-    itemsPerPage, // Hook'tan gelen değer
+    itemsPerPage,
   } = useShopFilters({
     priceRange,
     gender,
@@ -76,10 +77,18 @@ function Shop() {
     });
   };
 
-  // Ürünleri yükleme
+  // Ürünleri yükleme - enhanced to handle URL parameters on first load
   useEffect(() => {
-    fetchFilteredProducts();
-  }, [fetchFilteredProducts]);
+    // Only trigger on the first load
+    const searchParams = new URLSearchParams(location.search);
+    const hasFilters = searchParams.toString().length > 0;
+
+    // If there are URL parameters, they'll be handled by the hook
+    // Otherwise, fetch products with default parameters
+    if (!hasFilters) {
+      fetchFilteredProducts();
+    }
+  }, []);
 
   // Kategori değiştiğinde ürünleri güncelle
   useEffect(() => {
@@ -90,9 +99,16 @@ function Shop() {
         category_id: parseInt(selectedCategory),
       };
 
+      // Preserve any existing URL parameters when fetching
+      const searchParams = new URLSearchParams(location.search);
+      const sortParam = searchParams.get("sort");
+      if (sortParam) {
+        params.sort = sortParam;
+      }
+
       dispatch(fetchProducts(params));
     }
-  }, [selectedCategory, dispatch, itemsPerPage]);
+  }, [selectedCategory, dispatch, itemsPerPage, location.search]);
 
   // Görüntülenen ürünler
   const displayedProducts = filteredProducts || productList || [];
@@ -109,6 +125,9 @@ function Shop() {
 
   // Toplam sayfa sayısı
   const totalPages = Math.ceil(total / 12);
+
+  // The handleSortChange function is not needed here anymore
+  // since it's handled by the ProductToolbar component
 
   return (
     <div className="bg-gray-50 min-h-screen pb-10">

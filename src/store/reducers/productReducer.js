@@ -132,6 +132,10 @@ const productReducer = (state = initialState, action) => {
       return {
         ...state,
         sortBy: action.payload,
+        filteredProducts: sortProducts(
+          state.filteredProducts || state.productList,
+          action.payload
+        ),
         productList: sortProducts(state.productList, action.payload),
       };
     case PRODUCT_ACTIONS.SET_PRICE_RANGE:
@@ -196,22 +200,58 @@ const productReducer = (state = initialState, action) => {
   }
 };
 
-// Sorting helper function
+// Improved sorting helper function
 const sortProducts = (products, sortType) => {
+  if (!products || !Array.isArray(products)) return [];
+
   const productsCopy = [...products];
 
   switch (sortType) {
-    case "price-low":
-      return productsCopy.sort((a, b) => a.price - b.price);
-    case "price-high":
-      return productsCopy.sort((a, b) => b.price - a.price);
+    case "price:asc":
+      return productsCopy.sort((a, b) => {
+        // Handle discount prices if available
+        const priceA = a.discount_price || a.price || 0;
+        const priceB = b.discount_price || b.price || 0;
+        return priceA - priceB;
+      });
+    case "price:desc":
+      return productsCopy.sort((a, b) => {
+        // Handle discount prices if available
+        const priceA = a.discount_price || a.price || 0;
+        const priceB = b.discount_price || b.price || 0;
+        return priceB - priceA;
+      });
+    case "rating:asc":
+      return productsCopy.sort((a, b) => {
+        const ratingA = a.rating || 0;
+        const ratingB = b.rating || 0;
+        return ratingA - ratingB;
+      });
+    case "rating:desc":
+      return productsCopy.sort((a, b) => {
+        const ratingA = a.rating || 0;
+        const ratingB = b.rating || 0;
+        return ratingB - ratingA;
+      });
     case "newest":
-      return productsCopy.sort(
-        (a, b) =>
-          new Date(b.created_at || b.createdAt) -
-          new Date(a.created_at || a.createdAt)
-      );
-    default: // featured
+      return productsCopy.sort((a, b) => {
+        const dateA = new Date(a.created_at || a.createdAt || 0);
+        const dateB = new Date(b.created_at || b.createdAt || 0);
+        return dateB - dateA;
+      });
+    case "name:asc":
+      return productsCopy.sort((a, b) => {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+    case "name:desc":
+      return productsCopy.sort((a, b) => {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        return nameB.localeCompare(nameA);
+      });
+    default: // featured or any invalid option
       return productsCopy;
   }
 };
