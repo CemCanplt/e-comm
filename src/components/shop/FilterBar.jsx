@@ -129,7 +129,7 @@ const FilterBar = ({
         </div>
       </div>
 
-      {/* Categories filter */}
+      {/* Categories filter - Improved version */}
       <div className="mb-6 border-b pb-6">
         <div
           className="flex items-center justify-between cursor-pointer mb-4"
@@ -144,31 +144,36 @@ const FilterBar = ({
         </div>
 
         {expandedFilterSections.categories && (
-          <div className="space-y-2 max-h-60 overflow-y-auto">
+          <div className="space-y-2 max-h-72 overflow-y-auto">
             <button
               onClick={() => navigateToCategory({ id: "all" })}
-              className={`block w-full text-left px-3 py-2 text-sm rounded-md ${
+              className={`flex w-full items-center justify-between px-3 py-2 text-sm rounded-md ${
                 selectedCategory === "All"
                   ? "bg-blue-50 text-blue-600"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              All Categories
+              <span className="font-medium">All Categories</span>
             </button>
 
             {categories?.map((category) => (
               <button
                 key={category.id}
                 onClick={() => handleCategorySelect(category)}
-                className={`block w-full text-left px-3 py-2 text-sm rounded-md ${
+                className={`flex w-full items-center justify-between px-3 py-2 text-sm rounded-md ${
                   selectedCategory === category.id
                     ? "bg-blue-50 text-blue-600"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                {category.title}
-                <span className="text-xs text-gray-500 ml-1">
-                  ({category.gender === "k" ? "W" : "M"})
+                <div className="flex items-center">
+                  <span>{category.title}</span>
+                  <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                    {category.gender === "k" ? "W" : "M"}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500 bg-gray-50 rounded-full px-2 py-1">
+                  {category.productCount || 0}
                 </span>
               </button>
             ))}
@@ -249,29 +254,6 @@ const FilterBar = ({
             </div>
           </div>
         )}
-      </div>
-
-      <div className="mb-6">
-        <h3 className="font-medium text-gray-900 mb-3">Kategoriler</h3>
-        <ul className="space-y-2">
-          {categories?.map((category) => (
-            <li key={category.id}>
-              <button
-                onClick={() => handleCategorySelect(category)}
-                className={`block w-full text-left px-3 py-2 text-sm rounded-md flex justify-between ${
-                  selectedCategory === category.id
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <span>{category.title}</span>
-                <span className="text-xs text-gray-500">
-                  ({category.productCount || 0})
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
       </div>
     </aside>
   );

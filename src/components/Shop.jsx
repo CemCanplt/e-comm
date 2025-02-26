@@ -8,7 +8,6 @@ import { fetchProducts } from "../store/actions/productActions";
 // Components
 import ShopBreadcrumb from "./shop/ShopBreadcrumb";
 import GenderFilter from "./shop/GenderFilter";
-import CategoryGrid from "./shop/CategoryGrid";
 import FilterBar from "./shop/FilterBar";
 import ProductToolbar from "./shop/ProductToolbar";
 import ProductGrid from "./shop/ProductGrid";
@@ -146,20 +145,6 @@ function Shop() {
             onGenderChange={handleGenderChange}
             title={pageTitle}
           />
-
-          {/* Categories Grid - sadece bir cinsiyet seçildiğinde göster */}
-          {selectedGenderFilter !== "all" && (
-            <div className="flex flex-col mt-6">
-              <h2 className="text-xl font-bold mb-4">Kategoriler</h2>
-              <div className="">
-                <CategoryGrid
-                  categories={filteredCategories}
-                  isLoading={categoriesLoading}
-                  onCategoryClick={navigateToCategory}
-                />
-              </div>
-            </div>
-          )}
         </section>
 
         {/* Mobile filter button */}
