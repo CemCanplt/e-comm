@@ -1,8 +1,6 @@
-import React from "react";
-
 // Skeleton loader component
 const CategorySkeleton = () => (
-  <div className="w-full sm:w-1/2 md:w-1/3 xl:w-1/6 p-2">
+  <div className="w-full sm:w-1/2 md:w-1/3 xl:w-1/8 p-3">
     <div className="relative rounded-lg aspect-[3/4] bg-gray-200 animate-pulse shadow-md">
       <div className="absolute bottom-0 p-4 w-full">
         <div className="h-5 bg-gray-300 rounded w-3/4 mb-2"></div>
@@ -13,7 +11,7 @@ const CategorySkeleton = () => (
 );
 
 const CategoryCard = ({ category, onClick }) => (
-  <div className="w-full sm:w-1/2 md:w-1/3 xl:w-1/6 p-2">
+  <div className="w-full sm:w-1/2 md:w-1/3 xl:w-1/8 p-3">
     <div
       className="relative rounded-lg overflow-hidden shadow-md cursor-pointer transition-all hover:scale-105 hover:shadow-lg aspect-[3/4]"
       onClick={() => onClick(category)}
