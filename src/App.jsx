@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { autoLogin } from "./store/actions/userActions";
 import AboutUsPage from "./components/content/AboutUsPage";
-import ShoppingCart from "./components/ShoppingCart";
+import ShoppingCard from "./components/ShoppingCard";
 
 function App() {
   const dispatch = useDispatch();
@@ -32,29 +32,28 @@ function App() {
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
 
-          {/* Ürün detay rotasını en spesifik rotalardan önce tanımlayalım */}
-          <Route path="/shop/product/:id" component={ProductDetail} />
-
-          {/* Shop routes with parameters */}
+          {/* Shop routes with parameters - fixed order */}
           <Route exact path="/shop" component={Shop} />
-          <Route exact path="/shop/:gender" component={Shop} />
           <Route
-            exact
-            path="/shop/:gender/:categoryName/:categoryId"
-            component={Shop}
+            path="/shop/:gender/:categoryName/:id"
+            component={ProductDetail} // This will handle both product detail and category browsing
           />
 
-          {/* Diğer rotalar */}
+          {/* Other routes */}
           <Route path="/contact" component={Contact} />
           <Route path="/team" component={Team} />
-          <Route path="/aboutUs" component={AboutUsPage} />
-          <Route path="/cart" component={ShoppingCart} />
-          {/* Add any other routes here */}
+          <Route path="/about" component={AboutUsPage} />
+          <Route path="/card" component={ShoppingCard} />
 
           {/* Fallback route */}
           <Route
             component={() => (
-              <div className="p-10 text-center">Page not found</div>
+              <div className="container mx-auto px-4 py-16 text-center">
+                <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
+                <p className="mb-8">
+                  The page you are looking for doesn't exist.
+                </p>
+              </div>
             )}
           />
         </Switch>

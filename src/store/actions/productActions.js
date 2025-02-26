@@ -28,46 +28,66 @@ export const setTotalProducts = (total) => ({
 // Fetch products with filtering, sorting, and pagination
 export const fetchProducts = (params = {}) => {
   return async (dispatch) => {
-    dispatch({
-      type: PRODUCT_ACTIONS.SET_FETCH_STATE,
-      payload: "FETCHING",
-    });
-
     try {
-      // Build query parameters for the API request
-      const queryParams = {
-        limit: params.limit || 12,
-        offset: params.offset || 0,
-        filter: params.filter || "",
-        category_id: params.category_id || "",
-        sort: params.sort || "",
-      };
-
-      console.log("Fetching products with params:", queryParams);
-
-      const response = await axios.get(`${API_URL}/products`, {
-        params: queryParams,
+      // Set loading state
+      dispatch({
+        type: PRODUCT_ACTIONS.SET_PRODUCTS_LOADING,
+        payload: true,
       });
 
-      const { total, products } = response.data;
+      // Build query parameters
+      const queryParams = new URLSearchParams();
 
-      // Set total and products in the store
-      dispatch(setTotalProducts(total));
-      dispatch(fetchProductsSuccess(products));
+      if (params.category_id) {
+        queryParams.append("category_id", params.category_id);
+      }
 
-      // After fetching products, filter them based on current price range
-      dispatch({ type: PRODUCT_ACTIONS.FILTER_PRODUCTS });
+      if (params.filter) {
+        queryParams.append("filter", params.filter);
+      }
 
+      if (params.sort) {
+        queryParams.append("sort", params.sort);
+      }
+
+      if (params.limit) {
+        queryParams.append("limit", params.limit);
+      }
+
+      if (params.offset) {
+        queryParams.append("offset", params.offset);
+      }
+
+      const queryString = queryParams.toString();
+      const url = `${API_URL}/products${queryString ? `?${queryString}` : ""}`;
+
+      console.log("Fetching products from:", url);
+      const response = await axios.get(url);
+
+      // Update products in the store
       dispatch({
-        type: PRODUCT_ACTIONS.SET_FETCH_STATE,
-        payload: "FETCHED",
+        type: PRODUCT_ACTIONS.SET_PRODUCTS,
+        payload: response.data.products,
+      });
+
+      // Update total count in the store
+      dispatch({
+        type: PRODUCT_ACTIONS.SET_TOTAL_COUNT,
+        payload: response.data.total,
       });
 
       return response.data;
     } catch (error) {
       console.error("Error fetching products:", error);
-      dispatch(fetchProductsFailure(error.message));
-      throw error;
+      dispatch({
+        type: PRODUCT_ACTIONS.SET_PRODUCTS_ERROR,
+        payload: error.message,
+      });
+    } finally {
+      dispatch({
+        type: PRODUCT_ACTIONS.SET_PRODUCTS_LOADING,
+        payload: false,
+      });
     }
   };
 };

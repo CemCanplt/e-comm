@@ -1,13 +1,13 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useHistory } from "react-router-dom";
-import { setCart } from "../store/reducers/shoppingCartReducer";
+import { setCard } from "../store/reducers/shoppingCardReducer";
 import {
   Trash2,
   Plus,
   Minus,
   ArrowLeft,
-  ShoppingCart as CartIcon,
+  ShoppingCart as CardIcon, // ShoppingCard değil, ShoppingCart olarak düzeltildi
 } from "lucide-react";
 
 // Resim görüntüleme yardımcı fonksiyonu
@@ -28,32 +28,32 @@ const getProductImage = (item) => {
   return "https://placehold.co/100x100/gray/white?text=No+Image";
 };
 
-function ShoppingCart() {
-  const { cart } = useSelector((state) => state.shoppingCart);
+function ShoppingCard() {
+  const { card } = useSelector((state) => state.shoppingCard);
   const dispatch = useDispatch();
   const history = useHistory();
 
   const updateItemQuantity = (id, newQuantity) => {
     if (newQuantity < 1) return;
 
-    const updatedCart = cart.map((item) =>
+    const updatedCard = card.map((item) =>
       item.id === id ? { ...item, quantity: newQuantity } : item
     );
 
-    dispatch(setCart(updatedCart));
+    dispatch(setCard(updatedCard));
   };
 
   const removeItem = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
-    dispatch(setCart(updatedCart));
+    const updatedCard = card.filter((item) => item.id !== id);
+    dispatch(setCard(updatedCard));
   };
 
-  const clearCart = () => {
-    dispatch(setCart([]));
+  const clearCard = () => {
+    dispatch(setCard([]));
   };
 
   // Calculate totals
-  const subtotal = cart.reduce(
+  const subtotal = card.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
@@ -61,16 +61,16 @@ function ShoppingCart() {
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + shipping + tax;
 
-  if (cart.length === 0) {
+  if (card.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="mb-8">
           <div className="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
-            <CartIcon className="h-12 w-12 text-gray-400" />
+            <CardIcon className="h-12 w-12 text-gray-400" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Your Cart is Empty</h2>
+          <h2 className="text-2xl font-bold mb-2">Your Card is Empty</h2>
           <p className="text-gray-600 mb-6">
-            Looks like you haven't added any products to your cart yet.
+            Looks like you haven't added any products to your card yet.
           </p>
           <Link
             to="/shop"
@@ -86,10 +86,10 @@ function ShoppingCart() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8">Shopping Cart</h1>
+      <h1 className="text-2xl font-bold mb-8">Shopping Card</h1>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Cart Items */}
+        {/* Card Items */}
         <div className="flex-grow">
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b text-sm font-medium text-gray-500">
@@ -99,7 +99,7 @@ function ShoppingCart() {
               <div className="col-span-2 text-right">Total</div>
             </div>
 
-            {cart.map((item) => (
+            {card.map((item) => (
               <div key={item.id} className="border-b last:border-b-0">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center">
                   {/* Product Info */}
@@ -114,7 +114,13 @@ function ShoppingCart() {
                     <div>
                       <h3 className="font-medium">
                         <Link
-                          to={`/shop/product/${item.id}`}
+                          to={`/shop/${
+                            item.gender === "k" ? "kadin" : "erkek"
+                          }/${
+                            item.category
+                              ?.toLowerCase()
+                              .replace(/[^a-z0-9]+/g, "-") || "kategori"
+                          }/${item.id}`}
                           className="hover:text-blue-600"
                         >
                           {item.name}
@@ -193,10 +199,10 @@ function ShoppingCart() {
               Continue Shopping
             </Link>
             <button
-              onClick={clearCart}
+              onClick={clearCard}
               className="px-6 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors"
             >
-              Clear Cart
+              Clear Card
             </button>
           </div>
         </div>
@@ -237,4 +243,4 @@ function ShoppingCart() {
   );
 }
 
-export default ShoppingCart;
+export default ShoppingCard;

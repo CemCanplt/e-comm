@@ -20,6 +20,7 @@ const FilterBar = ({
   history,
   showFilters,
   resetFilters,
+  setShowFilters, // Add the missing setShowFilters prop
 }) => {
   return (
     <aside
@@ -175,7 +176,7 @@ const FilterBar = ({
             <button
               onClick={() => {
                 dispatch(filterProducts());
-                // Use the updated sortOption prop when dispatching
+                // Use the sortOption prop when dispatching
                 dispatch(
                   fetchProducts({
                     limit: 12,
@@ -187,6 +188,10 @@ const FilterBar = ({
                       sortOption && sortOption !== "featured" ? sortOption : "",
                   })
                 );
+                // Close filters on mobile after applying
+                if (window.innerWidth < 768) {
+                  setShowFilters && setShowFilters(false);
+                }
               }}
               className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
             >

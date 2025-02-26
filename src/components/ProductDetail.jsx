@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import {
   Heart,
-  ShoppingCart,
+  ShoppingCart as CardIcon,
   ArrowLeft,
   Star,
   Share2,
@@ -14,14 +14,15 @@ import {
   Truck,
   Shield,
 } from "lucide-react";
-import { setCart } from "../store/reducers/shoppingCartReducer";
+import { setCard } from "../store/reducers/shoppingCardReducer";
 import { toast } from "react-toastify";
 
 function ProductDetail() {
-  const { id } = useParams();
+  // Update to use the new URL parameters
+  const { gender, categoryName, id } = useParams();
   const history = useHistory();
   const dispatch = useDispatch();
-  const { cart } = useSelector((state) => state.shoppingCart);
+  const { card } = useSelector((state) => state.shoppingCard);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,38 +94,39 @@ function ProductDetail() {
     setQuantity(1);
   }, [id]);
 
-  const handleAddToCart = () => {
-    // Check if item is already in cart
-    const existingItem = cart.find((item) => item.id === product.id);
+  const handleAddToCard = () => {
+    // Check if item is already in card
+    const existingItem = card.find((item) => item.id === product.id);
 
-    let updatedCart;
+    let updatedCard;
     if (existingItem) {
-      // Update quantity if already in cart
-      updatedCart = cart.map((item) =>
+      // Update quantity if already in card
+      updatedCard = card.map((item) =>
         item.id === product.id
           ? { ...item, quantity: item.quantity + quantity }
           : item
       );
-      toast.info(`Updated ${product.name} quantity in cart`);
+      toast.info(`Updated ${product.name} quantity in card`);
     } else {
-      // Add new item to cart
-      updatedCart = [
-        ...cart,
+      // Add new item to card
+      updatedCard = [
+        ...card,
         {
           id: product.id,
           name: product.name,
           price: product.discount_price || product.price,
           image: product.images?.[0] || product.image,
           quantity: quantity,
-          // Store additional product details for better display in cart
+          // Store additional product details for better display in card
           category: product.category,
+          category_id: product.category_id, // Add category_id for filtering
           description: product.description?.substring(0, 100),
         },
       ];
-      toast.success(`Added ${product.name} to cart`);
+      toast.success(`Added ${product.name} to card`);
     }
 
-    dispatch(setCart(updatedCart));
+    dispatch(setCard(updatedCard));
   };
 
   const handleImageChange = (index) => {
@@ -145,6 +147,10 @@ function ProductDetail() {
 
   // Product Card for related products
   const ProductCard = ({ product }) => {
+    // Create SEO-friendly slug from product name
+    const slug =
+      product.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "product";
+
     // API'den gelen ürün verilerinin tutarlı olması için kontrol et
     const displayImage = () => {
       if (!product)
@@ -193,7 +199,7 @@ function ProductDetail() {
     return (
       <div
         className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md"
-        onClick={() => history.push(`/shop/product/${product.id}`)}
+        onClick={() => history.push(`/product/${product.id}/${slug}`)}
       >
         <div className="aspect-w-1 aspect-h-1">
           <img
@@ -256,6 +262,18 @@ function ProductDetail() {
     );
   }
 
+  // Update any navigation functions within ProductDetail
+  // For example, when navigating to related products:
+  const navigateToProduct = (product) => {
+    // Get gender and category from the product
+    const productGender = product.gender === "k" ? "kadin" : "erkek";
+    const productCategory =
+      product.category?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "kategori";
+
+    history.push(`/shop/${productGender}/${productCategory}/${product.id}`);
+  };
+
+  // Update the breadcrumb navigation
   return (
     <div className="bg-gray-50 py-8">
       <div className="container mx-auto px-4">
@@ -263,29 +281,41 @@ function ProductDetail() {
         <nav className="mb-6 text-sm">
           <ol className="flex items-center space-x-1">
             <li>
-              <Link
-                to="/"
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
+              <Link to="/" className="text-gray-500 hover:text-gray-700">
                 Home
               </Link>
             </li>
             <li className="text-gray-500">/</li>
             <li>
-              <Link
-                to="/shop"
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
+              <Link to="/shop" className="text-gray-500 hover:text-gray-700">
                 Shop
               </Link>
             </li>
+            {product?.category && (
+              <>
+                <li className="text-gray-500">/</li>
+                <li>
+                  <Link
+                    to={`/shop/${
+                      product.gender === "k" ? "kadin" : "erkek"
+                    }/${product.category
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, "-")}`}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    {product.category}
+                  </Link>
+                </li>
+              </>
+            )}
             <li className="text-gray-500">/</li>
             <li className="text-gray-700 font-medium truncate">
-              {product.name}
+              {product?.name}
             </li>
           </ol>
         </nav>
 
+        {/* Rest of the component... */}
         {/* Product Info Section */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
           {/* Mobile View */}
@@ -395,13 +425,13 @@ function ProductDetail() {
                     </div>
                   </div>
 
-                  {/* Add to Cart Button */}
+                  {/* Add to Card Button */}
                   <button
-                    onClick={handleAddToCart}
+                    onClick={handleAddToCard}
                     className="w-full py-3 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
                   >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart
+                    <CardIcon className="w-5 h-5 mr-2" />
+                    Add to Card
                   </button>
                 </div>
               </div>
@@ -517,14 +547,14 @@ function ProductDetail() {
                   </div>
                 </div>
 
-                {/* Add to Cart Button */}
+                {/* Add to Card Button */}
                 <div className="w-full md:w-1/2 md:pl-2">
                   <button
-                    onClick={handleAddToCart}
+                    onClick={handleAddToCard}
                     className="w-full py-3 px-8 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
                   >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Add to Cart
+                    <CardIcon className="w-5 h-5 mr-2" />
+                    Add to Card
                   </button>
                 </div>
               </div>

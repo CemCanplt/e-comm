@@ -39,6 +39,9 @@ export const PRODUCT_ACTIONS = {
   SET_SINGLE_PRODUCT_LOADING: "SET_SINGLE_PRODUCT_LOADING",
   SET_SINGLE_PRODUCT_ERROR: "SET_SINGLE_PRODUCT_ERROR",
   SET_RELATED_PRODUCTS: "SET_RELATED_PRODUCTS",
+  SET_PRODUCTS: "SET_PRODUCTS",
+  SET_TOTAL_COUNT: "SET_TOTAL_COUNT",
+  SET_PRODUCTS_LOADING: "SET_PRODUCTS_LOADING",
 };
 
 // Action Creators
@@ -147,6 +150,27 @@ const productReducer = (state = initialState, action) => {
       return { ...state, singleProductError: action.payload };
     case PRODUCT_ACTIONS.SET_RELATED_PRODUCTS:
       return { ...state, relatedProducts: action.payload };
+
+    // Product reducer case for setting products
+    case PRODUCT_ACTIONS.SET_PRODUCTS:
+      return {
+        ...state,
+        productList: action.payload,
+        filteredProducts: action.payload,
+        fetchState: "FETCHED",
+      };
+
+    case PRODUCT_ACTIONS.SET_TOTAL_COUNT:
+      return {
+        ...state,
+        total: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_PRODUCTS_LOADING:
+      return {
+        ...state,
+        fetchState: action.payload ? "FETCHING" : state.fetchState,
+      };
 
     default:
       return state;

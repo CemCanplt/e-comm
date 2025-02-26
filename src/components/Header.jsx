@@ -1,6 +1,6 @@
 import {
   Search,
-  ShoppingCart,
+  ShoppingCart as CardIcon, // ShoppingCart'ı CardIcon olarak yeniden adlandır
   User,
   Menu,
   X,
@@ -26,22 +26,22 @@ function Header() {
     (state) => state.categories
   );
 
-  // Cart dropdown functionality
-  const [showCartDropdown, setShowCartDropdown] = useState(false);
-  const cartDropdownRef = useRef(null);
-  const { cart } = useSelector((state) => state.shoppingCart);
+  // Card dropdown functionality
+  const [showCardDropdown, setShowCardDropdown] = useState(false);
+  const cardDropdownRef = useRef(null);
+  const { card } = useSelector((state) => state.shoppingCard);
 
-  // Calculate total items in cart
-  const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+  // Calculate total items in card
+  const cardItemsCount = card.reduce((total, item) => total + item.quantity, 0);
 
-  // Close cart dropdown when clicking outside
+  // Close card dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        cartDropdownRef.current &&
-        !cartDropdownRef.current.contains(event.target)
+        cardDropdownRef.current &&
+        !cardDropdownRef.current.contains(event.target)
       ) {
-        setShowCartDropdown(false);
+        setShowCardDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -184,76 +184,61 @@ function Header() {
     );
   };
 
-  const renderCartDropdown = () => (
-    <div className="relative" ref={cartDropdownRef}>
+  const renderCardDropdown = () => (
+    <div className="relative" ref={cardDropdownRef}>
       <button
         className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 relative"
-        aria-label="Shopping cart"
-        onClick={() => setShowCartDropdown(!showCartDropdown)}
+        aria-label="Shopping card"
+        onClick={() => setShowCardDropdown(!showCardDropdown)}
       >
-        <ShoppingCart className="h-6 w-6 text-gray-600 hover:text-gray-900" />
-        {cartItemsCount > 0 && (
+        <CardIcon className="h-6 w-6 text-gray-600 hover:text-gray-900" />
+        {cardItemsCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-            {cartItemsCount}
+            {cardItemsCount}
           </span>
         )}
       </button>
 
-      {showCartDropdown && (
+      {showCardDropdown && (
         <div className="absolute right-0 mt-2 py-2 w-72 bg-white rounded-lg shadow-xl z-50">
           <div className="px-4 py-2 border-b">
             <p className="text-sm font-medium text-gray-900">
-              {cartItemsCount} {cartItemsCount === 1 ? "item" : "items"} in cart
+              {cardItemsCount} {cardItemsCount === 1 ? "item" : "items"} in card
             </p>
           </div>
 
           <div className="max-h-64 overflow-y-auto">
-            {cart.length === 0 ? (
+            {card.length === 0 ? (
               <div className="px-4 py-4 text-center text-gray-500 text-sm">
-                Your cart is empty
+                Your card is empty
               </div>
             ) : (
-              cart.slice(0, 3).map((item) => (
-                <div
-                  key={item.id}
-                  className="px-4 py-3 border-b last:border-b-0 flex items-center"
-                >
-                  <div className="w-12 h-12 flex-shrink-0">
+              <div className="divide-y">
+                {card.map((item) => (
+                  <div key={item.id} className="px-4 py-2 flex items-center">
                     <img
-                      src={
-                        item.image ||
-                        "https://placehold.co/100x100/gray/white?text=No+Image"
-                      }
+                      src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover rounded"
+                      className="w-12 h-12 object-cover rounded"
                     />
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {item.quantity} × ${item.price}
+                      </p>
+                    </div>
                   </div>
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {item.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {item.quantity} × ${item.price?.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-
-            {cart.length > 3 && (
-              <div className="px-4 py-2 text-center text-sm text-gray-500">
-                +{cart.length - 3} more items
+                ))}
               </div>
             )}
           </div>
 
-          <div className="px-4 pt-2 pb-4 border-t mt-2">
+          <div className="px-4 py-2 flex justify-center mt-2">
             <Link
-              to="/cart"
-              className="block w-full px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
-              onClick={() => setShowCartDropdown(false)}
+              to="/card"
+              className="w-full py-2 bg-blue-600 text-white rounded-md text-center text-sm font-medium hover:bg-blue-700"
             >
-              View Cart
+              View Card
             </Link>
           </div>
         </div>
@@ -397,7 +382,7 @@ function Header() {
         <div className="flex-1 flex items-center justify-end space-x-4">
           {renderAuthSection()}
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
-          {renderCartDropdown()}
+          {renderCardDropdown()}
           {isOpen ? (
             <X
               onClick={toggleMenu}

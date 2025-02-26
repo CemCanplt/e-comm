@@ -53,7 +53,7 @@ const CategoryCard = ({ category, onClick }) => (
   </div>
 );
 
-// Product Card Component
+// Product Card Component - Fix the ProductCard navigation
 const ProductCard = ({ product, viewMode, onClick }) => {
   // Get history object for navigation
   const history = useHistory();
@@ -78,19 +78,18 @@ const ProductCard = ({ product, viewMode, onClick }) => {
     return "https://placehold.co/300x300/gray/white?text=No+Image";
   };
 
-  // Yönlendirme işlevi - sorunun asıl çözümü burada
+  // Improve navigation function using React Router
   const handleProductClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Önce konsola URL'i yazdıralım
-    const productUrl = `/shop/product/${product.id}`;
+    // Create SEO-friendly slug from product name
+    const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const productUrl = `/product/${product.id}/${slug}`;
     console.log("Navigating to:", productUrl);
 
-    // Doğrudan window.location kullanarak yönlendirme yapalım
-    window.location.href = productUrl;
+    history.push(productUrl);
 
-    // onClick callback'ini çağıralım
     if (onClick) {
       onClick(product);
     }
@@ -217,34 +216,41 @@ function Shop() {
     }
   }, [gender]);
 
+  // Update useEffect for category ID
+  useEffect(() => {
+    if (categoryId) {
+      setSelectedCategory(parseInt(categoryId));
+    } else {
+      setSelectedCategory("All");
+    }
+  }, [categoryId]);
+
   // Calculate offset for pagination
   const offset = (page - 1) * itemsPerPage;
 
-  // Fetch products based on filters, sorting, and pagination
+  // Enhanced fetchFilteredProducts function
   const fetchFilteredProducts = useCallback(() => {
     const params = {
       limit: itemsPerPage,
       offset: offset,
     };
 
-    // Add category filter if present
+    // Use category_id parameter if categoryId exists
     if (categoryId) {
-      params.category_id = categoryId;
+      params.category_id = parseInt(categoryId);
     }
 
-    // Add text filter if present
-    if (filterText) {
-      params.filter = filterText;
+    // Add filter parameter if filterText exists
+    if (filterText && filterText.trim() !== "") {
+      params.filter = filterText.trim();
     }
 
-    // Add sorting if selected
+    // Add sort parameter if sortOption exists and is not the default
     if (sortOption && sortOption !== "featured") {
       params.sort = sortOption;
     }
 
-    // Log the API request for debugging
     console.log("Fetching products with params:", params);
-
     dispatch(fetchProducts(params));
   }, [dispatch, categoryId, filterText, sortOption, offset, itemsPerPage]);
 
@@ -273,56 +279,79 @@ function Shop() {
     // Keep the base path with gender and category if they exist
     let basePath = location.pathname;
 
-    // If we're not on a specific category page and there's a selected category,
-    // we should navigate to the category page
-    if (
-      !categoryId &&
-      selectedCategory !== "All" &&
-      selectedCategory !== "all"
-    ) {
-      // Find the category object
-      const categoryObj = categories?.find(
-        (cat) => cat.id === selectedCategory
-      );
-      if (categoryObj) {
-        const gender = categoryObj.gender === "k" ? "kadin" : "erkek";
-        basePath = `/shop/${gender}/${categoryObj.title.toLowerCase()}/${
-          categoryObj.id
-        }`;
-      }
-    }
-
+    // Update URL without changing the path
     const newUrl =
       basePath + (searchParams.toString() ? `?${searchParams.toString()}` : "");
 
     history.replace(newUrl);
-  }, [
-    filterText,
-    sortOption,
-    history,
-    location.pathname,
-    categoryId,
-    selectedCategory,
-    categories,
-  ]);
+  }, [filterText, sortOption, history, location.pathname]);
 
   // Update URL when filters change
   useEffect(() => {
     updateUrlWithFilters();
   }, [filterText, sortOption, updateUrlWithFilters]);
 
-  // Navigate to a specific category
-  const navigateToCategory = (category) => {
-    if (category.id === "all") {
-      history.push("/shop");
-      return;
+  // Add this useEffect after other useEffects
+  useEffect(() => {
+    if (sortOption) {
+      // Update the sort in the Redux store
+      dispatch(setSortBy(sortOption));
     }
+  }, [sortOption, dispatch]);
 
-    const gender = category.gender === "k" ? "kadin" : "erkek";
-    history.push(
-      `/shop/${gender}/${category.title.toLowerCase()}/${category.id}`
-    );
-  };
+  // Update the navigateToCategory function to correctly handle the URL structure
+  const navigateToCategory = useCallback(
+    (category) => {
+      if (!category) return;
+
+      if (category.id === "all") {
+        // Navigate to base shop page for "All Categories"
+        history.push("/shop");
+        return;
+      }
+
+      // Create proper URL segments
+      const gender = category.gender === "k" ? "kadin" : "erkek";
+      const categoryName = category.title
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+
+      // Navigate to category page with proper structure
+      history.push(`/shop/${gender}/${categoryName}/${category.id}`);
+    },
+    [history]
+  );
+
+  // Add a helper function to select categories by either object or ID
+  const selectCategory = useCallback(
+    (categoryOrId) => {
+      // Reset the page when changing category
+      setPage(1);
+
+      // If we received a category object
+      if (typeof categoryOrId === "object") {
+        navigateToCategory(categoryOrId);
+        return;
+      }
+
+      // If we received a category ID
+      if (categoryOrId === "all" || !categoryOrId) {
+        setSelectedCategory("All");
+        history.push("/shop");
+        return;
+      }
+
+      // Find the category by ID and navigate to it
+      const categoryObj = categories?.find(
+        (cat) => cat.id === parseInt(categoryOrId)
+      );
+      if (categoryObj) {
+        navigateToCategory(categoryObj);
+      }
+    },
+    [categories, history, navigateToCategory]
+  );
 
   // Toggle filter sections
   const toggleFilterSection = (section) => {
@@ -333,7 +362,7 @@ function Shop() {
   };
 
   // Reset all filters
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setPriceValues([priceRange.min, priceRange.max]);
     dispatch(setPriceRange([priceRange.min, priceRange.max]));
     setSelectedCategory("All");
@@ -341,7 +370,7 @@ function Shop() {
     setFilterText("");
     setSortOption("featured");
     history.push("/shop");
-  };
+  }, [dispatch, history, priceRange.min, priceRange.max]);
 
   // Handle pagination
   const handlePageChange = (newPage) => {
@@ -537,6 +566,7 @@ function Shop() {
             priceRange={priceRange}
             dispatch={dispatch}
             filterProducts={filterProducts}
+            sortOption={sortOption} // Add sortOption prop
             history={history}
             showFilters={showFilters}
             resetFilters={resetFilters}
@@ -556,7 +586,12 @@ function Shop() {
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Filter/Search Input */}
                   <form
-                    onSubmit={handleApplyFilter}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      // Update URL and fetch products when form is submitted
+                      updateUrlWithFilters();
+                      fetchFilteredProducts();
+                    }}
                     className="flex items-center"
                   >
                     <div className="relative">
@@ -580,7 +615,14 @@ function Shop() {
                   {/* Sort Select - Updated with more options */}
                   <select
                     value={sortOption}
-                    onChange={(e) => setSortOption(e.target.value)}
+                    onChange={(e) => {
+                      setSortOption(e.target.value);
+                      // Update URL and trigger new request when sort changes
+                      setTimeout(() => {
+                        updateUrlWithFilters();
+                        fetchFilteredProducts();
+                      }, 0);
+                    }}
                     className="bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="featured">Featured</option>

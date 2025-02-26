@@ -1,6 +1,9 @@
-import React from "react";
-import { ArrowLeft, ArrowRight, Loader } from "lucide-react";
-import { Link, useHistory } from "react-router-dom";
+import React, { useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useHistory } from "react-router-dom";
+import LoadingSpinner from "../common/LoadingSpinner";
+import { useDispatch } from "react-redux";
+import { fetchProducts } from "../../store/actions/productActions";
 
 const ProductCard = ({ product, viewMode, onClick }) => {
   // Get history object for navigation
@@ -30,7 +33,15 @@ const ProductCard = ({ product, viewMode, onClick }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const productUrl = `/shop/product/${product.id}`;
+    // Get gender and category info for the URL
+    const gender = product.gender === "k" ? "kadin" : "erkek";
+    const category =
+      product.category?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "kategori";
+
+    // Create URL with the new format
+    const productUrl = `/shop/${gender}/${category}/${product.id}`;
+    console.log("Navigating to:", productUrl);
+
     history.push(productUrl);
 
     if (onClick) {
@@ -104,20 +115,44 @@ const ProductGrid = ({
   viewMode,
   totalPages,
   page,
-  handlePageChange,
+  handlePageChange: parentHandlePageChange, // Rename the prop
   resetFilters,
+  itemsPerPage,
+  categoryId,
+  filterText,
+  sortOption,
 }) => {
+  const dispatch = useDispatch();
+  const [currentPage, setPage] = useState(page);
+
+  // Update the handlePageChange function
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+
+    // Preserve current filters and sort when changing pages
+    const params = {
+      limit: itemsPerPage,
+      offset: (newPage - 1) * itemsPerPage,
+      category_id: categoryId ? parseInt(categoryId) : undefined,
+      filter: filterText || undefined,
+      sort: sortOption !== "featured" ? sortOption : undefined,
+    };
+
+    dispatch(fetchProducts(params));
+
+    // Call parent handler if provided
+    if (parentHandlePageChange) {
+      parentHandlePageChange(newPage);
+    }
+
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-sm p-4 h-72">
-            <div className="bg-gray-200 h-40 mb-4 rounded"></div>
-            <div className="bg-gray-200 h-4 w-3/4 mb-2 rounded"></div>
-            <div className="bg-gray-200 h-4 w-1/2 mb-4 rounded"></div>
-            <div className="bg-gray-200 h-4 w-1/3 rounded"></div>
-          </div>
-        ))}
+      <div className="bg-white rounded-lg shadow-sm p-8">
+        <LoadingSpinner message="Loading products..." />
       </div>
     );
   }
@@ -167,10 +202,10 @@ const ProductGrid = ({
         <div className="flex justify-center mt-8">
           <nav className="flex items-center space-x-1">
             <button
-              onClick={() => handlePageChange(Math.max(1, page - 1))}
-              disabled={page === 1}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
               className={`px-3 py-2 rounded ${
-                page === 1
+                currentPage === 1
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
@@ -184,14 +219,14 @@ const ProductGrid = ({
                 totalPages <= 7 ||
                 i === 0 ||
                 i === totalPages - 1 ||
-                (page - 3 <= i && i <= page + 1)
+                (currentPage - 3 <= i && i <= currentPage + 1)
               ) {
                 return (
                   <button
                     key={i}
                     onClick={() => handlePageChange(i + 1)}
                     className={`w-10 h-10 flex items-center justify-center rounded-full ${
-                      page === i + 1
+                      currentPage === i + 1
                         ? "bg-blue-600 text-white"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
@@ -200,8 +235,8 @@ const ProductGrid = ({
                   </button>
                 );
               } else if (
-                (i === 1 && page > 4) ||
-                (i === totalPages - 2 && page < totalPages - 4)
+                (i === 1 && currentPage > 4) ||
+                (i === totalPages - 2 && currentPage < totalPages - 4)
               ) {
                 return (
                   <span key={i} className="px-2">
@@ -214,10 +249,12 @@ const ProductGrid = ({
             })}
 
             <button
-              onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
+              onClick={() =>
+                handlePageChange(Math.min(totalPages, currentPage + 1))
+              }
+              disabled={currentPage === totalPages}
               className={`px-3 py-2 rounded ${
-                page === totalPages
+                currentPage === totalPages
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-gray-600 hover:bg-gray-100"
               }`}

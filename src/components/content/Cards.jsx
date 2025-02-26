@@ -24,7 +24,7 @@ function Cards({ kart }) {
             opacity-0 group-hover:opacity-100"
           >
             {/* Butonlar için ortak class */}
-            {["cart", "favorite", "compare"].map((action) => (
+            {["card", "favorite", "compare"].map((action) => (
               <button
                 key={action}
                 className="w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg 

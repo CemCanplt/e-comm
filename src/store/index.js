@@ -3,13 +3,13 @@ import { thunk } from "redux-thunk";
 import logger from "redux-logger";
 import userReducer from "./reducers/userReducer";
 import productReducer from "./reducers/productReducer";
-import shoppingCartReducer from "./reducers/shoppingCartReducer";
+import shoppingCardReducer from "./reducers/shoppingCardReducer";
 import categoryReducer from "./reducers/categoryReducer";
 
 const rootReducer = combineReducers({
   user: userReducer,
   product: productReducer,
-  shoppingCart: shoppingCartReducer,
+  shoppingCard: shoppingCardReducer,
   categories: categoryReducer,
 });
 
