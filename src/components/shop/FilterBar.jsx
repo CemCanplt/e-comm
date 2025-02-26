@@ -1,5 +1,6 @@
 import React from "react";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { fetchProducts } from "../../store/actions/productActions";
 
 const FilterBar = ({
   filterText,
@@ -15,6 +16,7 @@ const FilterBar = ({
   priceRange,
   dispatch,
   filterProducts,
+  sortOption, // Add the missing sortOption prop
   history,
   showFilters,
   resetFilters,
@@ -67,49 +69,40 @@ const FilterBar = ({
         </div>
 
         {expandedFilterSections.categories && (
-          <ul className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-            <li>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            <button
+              onClick={() => navigateToCategory({ id: "all" })}
+              className={`block w-full text-left px-3 py-2 text-sm rounded-md ${
+                selectedCategory === "All"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              All Categories
+            </button>
+
+            {categories?.map((category) => (
               <button
-                onClick={() => {
-                  setSelectedCategory("All");
-                  history.push("/shop");
-                }}
-                className={`flex items-center w-full text-left py-1 px-2 rounded ${
-                  selectedCategory === "All"
+                key={category.id}
+                onClick={() => navigateToCategory(category)}
+                className={`block w-full text-left px-3 py-2 text-sm rounded-md ${
+                  selectedCategory === category.id
                     ? "bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                <span className="flex-1">All Categories</span>
+                {category.title}
+                <span className="text-xs text-gray-500 ml-1">
+                  ({category.gender === "k" ? "W" : "M"})
+                </span>
               </button>
-            </li>
-            {categories &&
-              categories.map((category) => (
-                <li key={category.id}>
-                  <button
-                    onClick={() => {
-                      setSelectedCategory(category.id);
-                      navigateToCategory(category);
-                    }}
-                    className={`flex items-center w-full text-left py-1 px-2 rounded ${
-                      selectedCategory === category.id
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="flex-1 truncate">{category.title}</span>
-                    <span className="text-xs text-gray-400">
-                      ({category.products_count || 0})
-                    </span>
-                  </button>
-                </li>
-              ))}
-          </ul>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Price range filter */}
-      <div>
+      {/* Price Range filter */}
+      <div className="mb-6 border-b pb-6">
         <div
           className="flex items-center justify-between cursor-pointer mb-4"
           onClick={() => toggleFilterSection("price")}
@@ -180,7 +173,21 @@ const FilterBar = ({
             </div>
 
             <button
-              onClick={() => dispatch(filterProducts())}
+              onClick={() => {
+                dispatch(filterProducts());
+                // Use the updated sortOption prop when dispatching
+                dispatch(
+                  fetchProducts({
+                    limit: 12,
+                    offset: 0,
+                    category_id:
+                      selectedCategory !== "All" ? selectedCategory : "",
+                    filter: filterText,
+                    sort:
+                      sortOption && sortOption !== "featured" ? sortOption : "",
+                  })
+                );
+              }}
               className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
             >
               Apply Filter

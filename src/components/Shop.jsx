@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Filter,
   X,
@@ -17,7 +17,7 @@ import {
   filterProducts,
 } from "../store/reducers/productReducer";
 import { fetchProducts } from "../store/actions/productActions";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { Link, useHistory, useParams, useLocation } from "react-router-dom";
 import { fetchCategories } from "../store/actions/categoryActions";
 import FilterBar from "./shop/FilterBar";
 import ProductGrid from "./shop/ProductGrid";
@@ -164,6 +164,7 @@ const ProductCard = ({ product, viewMode, onClick }) => {
 function Shop() {
   const dispatch = useDispatch();
   const history = useHistory();
+  const location = useLocation();
   const { gender, categoryName, categoryId } = useParams();
   const {
     productList,
@@ -190,86 +191,140 @@ function Shop() {
     priceRange.current[1],
   ]);
   const [selectedGenderFilter, setSelectedGenderFilter] = useState("all");
-  const [page, setPage] = useState(1);
+
+  // Added states for filtering and sorting
   const [filterText, setFilterText] = useState("");
   const [sortOption, setSortOption] = useState("featured");
+  const [page, setPage] = useState(1);
   const itemsPerPage = 12;
 
-  // Check if products are loading
-  const isProductsLoading = fetchState === "FETCHING";
+  // Parse query params on component mount and location change
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const filter = searchParams.get("filter") || "";
+    const sort = searchParams.get("sort") || "featured";
 
-  // Fetch data on mount
+    setFilterText(filter);
+    setSortOption(sort);
+  }, [location.search]);
+
+  // Set selected gender based on URL parameter
+  useEffect(() => {
+    if (gender) {
+      setSelectedGenderFilter(gender === "kadin" ? "k" : "e");
+    } else {
+      setSelectedGenderFilter("all");
+    }
+  }, [gender]);
+
+  // Calculate offset for pagination
+  const offset = (page - 1) * itemsPerPage;
+
+  // Fetch products based on filters, sorting, and pagination
+  const fetchFilteredProducts = useCallback(() => {
+    const params = {
+      limit: itemsPerPage,
+      offset: offset,
+    };
+
+    // Add category filter if present
+    if (categoryId) {
+      params.category_id = categoryId;
+    }
+
+    // Add text filter if present
+    if (filterText) {
+      params.filter = filterText;
+    }
+
+    // Add sorting if selected
+    if (sortOption && sortOption !== "featured") {
+      params.sort = sortOption;
+    }
+
+    // Log the API request for debugging
+    console.log("Fetching products with params:", params);
+
+    dispatch(fetchProducts(params));
+  }, [dispatch, categoryId, filterText, sortOption, offset, itemsPerPage]);
+
+  // Fetch products when relevant parameters change
+  useEffect(() => {
+    fetchFilteredProducts();
+  }, [fetchFilteredProducts]);
+
+  // Fetch categories on component mount
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  // Handle URL params and fetch products based on them
-  useEffect(() => {
-    // Set states based on URL parameters
-    if (categoryId) setSelectedCategory(parseInt(categoryId));
-    if (gender === "kadin") setSelectedGenderFilter("k");
-    else if (gender === "erkek") setSelectedGenderFilter("e");
+  // Update URL when filters change
+  const updateUrlWithFilters = useCallback(() => {
+    const searchParams = new URLSearchParams();
 
-    // Build query parameters for API request
-    const params = {
-      limit: itemsPerPage,
-      offset: (page - 1) * itemsPerPage,
-    };
+    if (filterText) {
+      searchParams.set("filter", filterText);
+    }
 
-    // Add category filter if present
-    if (categoryId) params.category_id = categoryId;
-
-    // Add sort parameter if present (and not default)
     if (sortOption && sortOption !== "featured") {
-      // Convert UI sort option to API format
-      switch (sortOption) {
-        case "price-low":
-          params.sort = "price:asc";
-          break;
-        case "price-high":
-          params.sort = "price:desc";
-          break;
-        case "newest":
-          params.sort = "created_at:desc";
-          break;
-        case "rating-high":
-          params.sort = "rating:desc";
-          break;
-        default:
-          break;
+      searchParams.set("sort", sortOption);
+    }
+
+    // Keep the base path with gender and category if they exist
+    let basePath = location.pathname;
+
+    // If we're not on a specific category page and there's a selected category,
+    // we should navigate to the category page
+    if (
+      !categoryId &&
+      selectedCategory !== "All" &&
+      selectedCategory !== "all"
+    ) {
+      // Find the category object
+      const categoryObj = categories?.find(
+        (cat) => cat.id === selectedCategory
+      );
+      if (categoryObj) {
+        const gender = categoryObj.gender === "k" ? "kadin" : "erkek";
+        basePath = `/shop/${gender}/${categoryObj.title.toLowerCase()}/${
+          categoryObj.id
+        }`;
       }
     }
 
-    // Add text filter if present
-    if (filterText) params.filter = filterText;
+    const newUrl =
+      basePath + (searchParams.toString() ? `?${searchParams.toString()}` : "");
 
-    // Fetch products with all applied parameters
-    dispatch(fetchProducts(params));
-  }, [dispatch, categoryId, gender, page, sortOption, filterText]);
+    history.replace(newUrl);
+  }, [
+    filterText,
+    sortOption,
+    history,
+    location.pathname,
+    categoryId,
+    selectedCategory,
+    categories,
+  ]);
 
-  // Event handlers
-  const handlePriceRangeChange = (e) => {
-    const value = parseInt(e.target.value);
-    const index = e.target.name === "min" ? 0 : 1;
-    const newValues = [...priceValues];
-    newValues[index] = value;
+  // Update URL when filters change
+  useEffect(() => {
+    updateUrlWithFilters();
+  }, [filterText, sortOption, updateUrlWithFilters]);
 
-    if (newValues[0] <= newValues[1]) {
-      setPriceValues(newValues);
-      dispatch(setPriceRange(newValues));
-      dispatch(filterProducts());
-    }
-  };
-
+  // Navigate to a specific category
   const navigateToCategory = (category) => {
-    const genderText = category.gender === "k" ? "kadin" : "erkek";
-    // Navigate while preserving other query params
+    if (category.id === "all") {
+      history.push("/shop");
+      return;
+    }
+
+    const gender = category.gender === "k" ? "kadin" : "erkek";
     history.push(
-      `/shop/${genderText}/${category.title.toLowerCase()}/${category.id}`
+      `/shop/${gender}/${category.title.toLowerCase()}/${category.id}`
     );
-    // Category ID will trigger a new fetch in the useEffect
   };
 
+  // Toggle filter sections
   const toggleFilterSection = (section) => {
     setExpandedFilterSections({
       ...expandedFilterSections,
@@ -277,6 +332,7 @@ function Shop() {
     });
   };
 
+  // Reset all filters
   const resetFilters = () => {
     setPriceValues([priceRange.min, priceRange.max]);
     dispatch(setPriceRange([priceRange.min, priceRange.max]));
@@ -285,24 +341,41 @@ function Shop() {
     setFilterText("");
     setSortOption("featured");
     history.push("/shop");
-    // This will trigger a new fetch via useEffect
   };
 
   // Handle pagination
   const handlePageChange = (newPage) => {
     setPage(newPage);
-    // Page change will trigger a new fetch via useEffect with adjusted offset
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Apply filter handler
+  // Apply filter handler with form submission
   const handleApplyFilter = (e) => {
     e.preventDefault();
-    // Filter application is handled by the state changes and useEffect
+    // Update URL and trigger new request
+    updateUrlWithFilters();
+    fetchFilteredProducts();
+  };
+
+  // Price range change handler
+  const handlePriceRangeChange = (e) => {
+    const { name, value } = e.target;
+    const numValue = Number(value);
+
+    if (name === "min") {
+      setPriceValues([numValue, priceValues[1]]);
+      dispatch(setPriceRange([numValue, priceValues[1]]));
+    } else {
+      setPriceValues([priceValues[0], numValue]);
+      dispatch(setPriceRange([priceValues[0], numValue]));
+    }
   };
 
   // Calculate total pages
   const totalPages = Math.ceil(total / itemsPerPage);
+
+  // Loading state
+  const isProductsLoading = fetchState === "FETCHING";
 
   // Filtered data for UI display
   const filteredCategories = categories
@@ -496,6 +569,12 @@ function Shop() {
                       />
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     </div>
+                    <button
+                      type="submit"
+                      className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Filter
+                    </button>
                   </form>
 
                   {/* Sort Select - Updated with more options */}
@@ -505,10 +584,10 @@ function Shop() {
                     className="bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="featured">Featured</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="newest">Newest</option>
-                    <option value="rating-high">Highest Rated</option>
+                    <option value="price:asc">Price: Low to High</option>
+                    <option value="price:desc">Price: High to Low</option>
+                    <option value="rating:asc">Rating: Low to High</option>
+                    <option value="rating:desc">Rating: High to Low</option>
                   </select>
 
                   {/* View Mode Toggles */}
