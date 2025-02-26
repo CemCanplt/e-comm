@@ -36,11 +36,57 @@ function ProductDetail() {
     const fetchProductData = async () => {
       setLoading(true);
       try {
+        // Ürün verisini çek
         const response = await axios.get(
           `https://workintech-fe-ecommerce.onrender.com/products/${id}`
         );
 
         const productData = response.data;
+
+        // Ürünün kategori bilgisini al
+        if (productData.category_id) {
+          // Tüm kategorileri çek
+          const categoriesResponse = await axios.get(
+            "https://workintech-fe-ecommerce.onrender.com/categories"
+          );
+
+          // Ürünün kategorisini bul
+          const categoryInfo = categoriesResponse.data.find(
+            (cat) => cat.id === productData.category_id
+          );
+
+          // ProductDetail.jsx içinde URL güncelleme kodu
+
+          // Ürün verisi çektikten sonra doğru URL'yi oluşturma
+          if (categoryInfo) {
+            // Kategori bilgisini ürüne ekle
+            productData.category = categoryInfo.title;
+
+            // Code bilgisini kullanarak gender ve slug belirle
+            const code = categoryInfo.code || "";
+            const codeParts = code.split(":");
+
+            const genderCode = codeParts[0] || "";
+            const categorySlug =
+              codeParts[1] ||
+              categoryInfo.title
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-]/g, "");
+
+            // Gender bilgisini belirle
+            productData.gender = genderCode;
+            const genderText = genderCode === "k" ? "kadin" : "erkek";
+
+            // Doğru URL yolu (artık /product ile başlıyor)
+            const correctPath = `/product/${genderText}/${categorySlug}/${id}`;
+
+            // Eğer mevcut URL doğru değilse güncelle
+            if (history.location.pathname !== correctPath) {
+              history.replace(correctPath);
+            }
+          }
+        }
 
         // API'den gelen images türünü kontrol et ve düzenle
         if (productData.images) {
@@ -71,10 +117,10 @@ function ProductDetail() {
 
         setProduct(productData);
 
-        // Fetch related products
+        // İlgili ürünleri çek - kategori ID'sine göre
         if (response.data.category_id) {
           const relatedResponse = await axios.get(
-            `https://workintech-fe-ecommerce.onrender.com/products?limit=4&category_id=${response.data.category_id}`
+            `https://workintech-fe-ecommerce.onrender.com/products?category_id=${response.data.category_id}&limit=4`
           );
           setRelatedProducts(
             relatedResponse.data.products.filter((p) => p.id !== parseInt(id))
@@ -92,7 +138,7 @@ function ProductDetail() {
     window.scrollTo(0, 0);
     setSelectedImage(0);
     setQuantity(1);
-  }, [id]);
+  }, [id, history]);
 
   const handleAddToCard = () => {
     // Check if item is already in card

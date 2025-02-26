@@ -200,6 +200,29 @@ const FilterBar = ({
           </div>
         )}
       </div>
+
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-900 mb-3">Kategoriler</h3>
+        <ul className="space-y-2">
+          {categories?.map((category) => (
+            <li key={category.id}>
+              <button
+                onClick={() => navigateToCategory(category)}
+                className={`block w-full text-left px-3 py-2 text-sm rounded-md flex justify-between ${
+                  selectedCategory === category.id
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <span>{category.title}</span>
+                <span className="text-xs text-gray-500">
+                  ({category.productCount || 0})
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </aside>
   );
 };

@@ -319,13 +319,14 @@ function Header() {
                             categoriesByGender.erkek.map((category) => (
                               <Link
                                 key={category.id}
-                                to={`/shop/erkek/${category.title.toLowerCase()}/${
-                                  category.id
-                                }`}
+                                to={`/shop/${category.genderText}/${category.slug}/${category.id}`}
                                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                 onClick={() => setIsDropdownOpen(false)}
                               >
                                 {category.title}
+                                <span className="text-xs text-gray-500 ml-1">
+                                  ({category.productCount || 0})
+                                </span>
                               </Link>
                             ))
                           ) : (
@@ -345,13 +346,14 @@ function Header() {
                             categoriesByGender.kadin.map((category) => (
                               <Link
                                 key={category.id}
-                                to={`/shop/kadin/${category.title.toLowerCase()}/${
-                                  category.id
-                                }`}
+                                to={`/shop/${category.genderText}/${category.slug}/${category.id}`}
                                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                 onClick={() => setIsDropdownOpen(false)}
                               >
                                 {category.title}
+                                <span className="text-xs text-gray-500 ml-1">
+                                  ({category.productCount || 0})
+                                </span>
                               </Link>
                             ))
                           ) : (

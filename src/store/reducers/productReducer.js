@@ -19,6 +19,9 @@ const initialState = {
   singleProductLoading: false,
   singleProductError: null,
   relatedProducts: [],
+
+  // Add genderFilter to the initial state
+  genderFilter: null,
 };
 
 // Action Types
@@ -42,6 +45,9 @@ export const PRODUCT_ACTIONS = {
   SET_PRODUCTS: "SET_PRODUCTS",
   SET_TOTAL_COUNT: "SET_TOTAL_COUNT",
   SET_PRODUCTS_LOADING: "SET_PRODUCTS_LOADING",
+
+  // Add gender filter action type
+  SET_GENDER_FILTER: "SET_GENDER_FILTER",
 };
 
 // Action Creators
@@ -92,6 +98,12 @@ export const setPriceRange = (range) => ({
 
 export const filterProducts = () => ({
   type: PRODUCT_ACTIONS.FILTER_PRODUCTS,
+});
+
+// Add gender filter action creator
+export const setGenderFilter = (gender) => ({
+  type: PRODUCT_ACTIONS.SET_GENDER_FILTER,
+  payload: gender,
 });
 
 // Reducer
@@ -170,6 +182,13 @@ const productReducer = (state = initialState, action) => {
       return {
         ...state,
         fetchState: action.payload ? "FETCHING" : state.fetchState,
+      };
+
+    // Add case for gender filter
+    case PRODUCT_ACTIONS.SET_GENDER_FILTER:
+      return {
+        ...state,
+        genderFilter: action.payload,
       };
 
     default:

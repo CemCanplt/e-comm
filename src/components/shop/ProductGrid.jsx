@@ -33,16 +33,42 @@ const ProductCard = ({ product, viewMode, onClick }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Get gender and category info for the URL
-    const gender = product.gender === "k" ? "kadin" : "erkek";
-    const category =
-      product.category?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "kategori";
+    // Bu kategori ID'sini kullanarak categoryInfo'yu al
+    if (product.category_id) {
+      // Redux'tan kategorileri al
+      const categories = store.getState().categories.categories;
+      const category = categories.find((cat) => cat.id === product.category_id);
 
-    // Create URL with the new format
-    const productUrl = `/shop/${gender}/${category}/${product.id}`;
-    console.log("Navigating to:", productUrl);
+      if (category) {
+        // Kategori bilgilerini kullan
+        const genderText = category.genderCode === "k" ? "kadin" : "erkek";
+        const slug =
+          category.slug ||
+          category.title
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "");
 
-    history.push(productUrl);
+        // URL oluştur - artık product ile başlayan URL
+        const productUrl = `/product/${genderText}/${slug}/${product.id}`;
+        console.log("Navigating to:", productUrl);
+
+        history.push(productUrl);
+      } else {
+        // Kategori bulunamadıysa fallback çözüm
+        const gender = product.gender === "k" ? "kadin" : "erkek";
+        const defaultSlug =
+          product.category
+            ?.toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "") || "kategori";
+
+        history.push(`/product/${gender}/${defaultSlug}/${product.id}`);
+      }
+    } else {
+      // Son çare - sadece ID'ye göre URL
+      history.push(`/product/kategori/urun/${product.id}`);
+    }
 
     if (onClick) {
       onClick(product);

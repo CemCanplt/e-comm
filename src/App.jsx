@@ -5,7 +5,7 @@ import Header from "./components/Header";
 import PageContent from "./components/PageContent";
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
-import Shop from "./components/Shop";
+import Shop from "./components/shop/Shop";
 import ProductDetail from "./components/ProductDetail";
 import Contact from "./components/content/Contact";
 import Team from "./components/Team";
@@ -34,9 +34,15 @@ function App() {
 
           {/* Shop routes with parameters - fixed order */}
           <Route exact path="/shop" component={Shop} />
+          <Route exact path="/shop/:gender" component={Shop} />
+          <Route exact path="/shop/:gender/:categorySlug" component={Shop} />
           <Route
-            path="/shop/:gender/:categoryName/:id"
-            component={ProductDetail} // This will handle both product detail and category browsing
+            path="/shop/:gender/:categorySlug/:categoryId"
+            component={Shop}
+          />
+          <Route
+            path="/product/:gender/:categorySlug/:productId"
+            component={ProductDetail}
           />
 
           {/* Other routes */}

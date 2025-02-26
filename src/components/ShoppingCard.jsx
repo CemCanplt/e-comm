@@ -114,12 +114,14 @@ function ShoppingCard() {
                     <div>
                       <h3 className="font-medium">
                         <Link
-                          to={`/shop/${
+                          to={`/product/${
                             item.gender === "k" ? "kadin" : "erkek"
                           }/${
+                            item.category_slug ||
                             item.category
                               ?.toLowerCase()
-                              .replace(/[^a-z0-9]+/g, "-") || "kategori"
+                              .replace(/[^a-z0-9-]/g, "-") ||
+                            "kategori"
                           }/${item.id}`}
                           className="hover:text-blue-600"
                         >
