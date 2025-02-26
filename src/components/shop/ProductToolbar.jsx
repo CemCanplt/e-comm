@@ -1,16 +1,13 @@
 import React from "react";
-import { Grid, List, Search } from "lucide-react";
+import { Grid, List } from "lucide-react"; // Removed Search import
 
 const ProductToolbar = ({
   displayedProducts,
   total,
-  filterText,
-  setFilterText,
   sortOption,
   setSortOption,
   viewMode,
   setViewMode,
-  updateUrlWithFilters,
   fetchFilteredProducts,
 }) => {
   const handleSortChange = (e) => {
@@ -23,15 +20,6 @@ const ProductToolbar = ({
     });
   };
 
-  const handleSearchChange = (e) => {
-    setFilterText(e.target.value);
-  };
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    fetchFilteredProducts();
-  };
-
   return (
     <div className="flex flex-col mb-6 bg-white p-4 rounded-lg shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -40,25 +28,8 @@ const ProductToolbar = ({
           Showing {displayedProducts.length} of {total} products
         </div>
 
-        {/* Right - Search & Sort Controls */}
+        {/* Right - Sort Controls and View Toggles */}
         <div className="flex flex-wrap gap-4">
-          {/* Search input */}
-          <form onSubmit={handleSearchSubmit} className="relative">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={filterText}
-              onChange={handleSearchChange}
-              className="pl-9 pr-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 w-full max-w-xs"
-            />
-            <button
-              type="submit"
-              className="absolute left-0 top-0 h-full px-2 flex items-center justify-center text-gray-500"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-          </form>
-
           {/* Sort dropdown */}
           <select
             value={sortOption}

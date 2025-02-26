@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Filter } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useLocation } from "react-router-dom"; // <-- Add useLocation import
@@ -190,10 +190,10 @@ function Shop() {
             priceRange={priceRange}
             dispatch={dispatch}
             sortOption={sortOption}
-            history={history}
             showFilters={showFilters}
             resetFilters={resetFilters}
             setShowFilters={setShowFilters}
+            fetchFilteredProducts={fetchFilteredProducts} // Add this prop
           />
 
           {/* Main content */}
@@ -202,8 +202,6 @@ function Shop() {
             <ProductToolbar
               displayedProducts={displayedProducts}
               total={total}
-              filterText={filterText}
-              setFilterText={setFilterText}
               sortOption={sortOption}
               setSortOption={setSortOption}
               viewMode={viewMode}

@@ -22,7 +22,7 @@ export const useShopFilters = ({
   // Filtreleme state'leri
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedGenderFilter, setSelectedGenderFilter] = useState("all");
-  const [filterText, setFilterText] = useState("");
+  const [filterText, setFilterTextState] = useState("");
   const [sortOption, setSortOption] = useState("featured");
   const [page, setPage] = useState(1);
   const [priceValues, setPriceValues] = useState([
@@ -79,7 +79,7 @@ export const useShopFilters = ({
     const sort = searchParams.get("sort") || "featured";
     const pageParam = parseInt(searchParams.get("page"), 10) || 1;
 
-    setFilterText(filter);
+    setFilterTextState(filter);
     setSortOption(sort);
     setPage(pageParam);
 
@@ -307,7 +307,7 @@ export const useShopFilters = ({
     dispatch(setPriceRange([priceRange?.min || 0, priceRange?.max || 1000]));
     setSelectedCategory("All");
     setSelectedGenderFilter("all");
-    setFilterText("");
+    setFilterTextState("");
     setSortOption("featured");
     history.push("/shop");
   }, [dispatch, history, priceRange]);
@@ -394,6 +394,19 @@ export const useShopFilters = ({
 
     // Fetch products for the new page
     fetchFilteredProducts({ offset: (newPage - 1) * itemsPerPage });
+  };
+
+  const setFilterText = (value) => {
+    // Make sure we're dealing with a string value
+    const textValue = typeof value === "string" ? value : "";
+
+    // Update the state with the string value
+    setFilterTextState(textValue);
+
+    // If the value is empty, make sure we actually clear it
+    if (textValue === "") {
+      fetchFilteredProducts({ filter: "" });
+    }
   };
 
   return {

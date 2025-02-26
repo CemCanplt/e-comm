@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
 import { fetchProducts } from "../../store/actions/productActions";
 
@@ -19,7 +19,20 @@ const FilterBar = ({
   showFilters,
   resetFilters,
   setShowFilters,
+  fetchFilteredProducts,
 }) => {
+  // Create refs for timeouts
+  const searchTimeoutRef = useRef(null);
+  const priceTimeoutRef = useRef(null);
+
+  // Clean up timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      if (priceTimeoutRef.current) clearTimeout(priceTimeoutRef.current);
+    };
+  }, []);
+
   // Kategori seçim işleyicisini iyileştir
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.id);
@@ -29,6 +42,51 @@ const FilterBar = ({
     if (window.innerWidth < 768) {
       setShowFilters && setShowFilters(false);
     }
+  };
+
+  // Handle search input change with custom debounce
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+
+    // Set the filter text value - this should correctly update the UI
+    setFilterText(value);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout to apply the filter after typing stops
+    searchTimeoutRef.current = setTimeout(() => {
+      // Only trigger API call if there's value or if we're clearing previous filter
+      fetchFilteredProducts({ filter: value });
+    }, 500);
+  };
+
+  // Handle price range changes with custom debounce
+  const handlePriceChange = (e) => {
+    const { name, value } = e.target;
+    const newValue = Number(value);
+    let newMin = priceValues[0];
+    let newMax = priceValues[1];
+
+    if (name === "min") {
+      newMin = newValue;
+      handlePriceRangeChange(e);
+    } else {
+      newMax = newValue;
+      handlePriceRangeChange(e);
+    }
+
+    // Clear previous timeout
+    if (priceTimeoutRef.current) {
+      clearTimeout(priceTimeoutRef.current);
+    }
+
+    // Set new timeout
+    priceTimeoutRef.current = setTimeout(() => {
+      fetchFilteredProducts({ priceMin: newMin, priceMax: newMax });
+    }, 500);
   };
 
   return (
@@ -56,9 +114,16 @@ const FilterBar = ({
           <input
             type="text"
             value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
+            onChange={handleSearchChange}
             placeholder="Search products..."
             className="w-full pl-9 pr-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+            onBlur={() => {
+              // Ensure the filter text state is synced when the input loses focus
+              if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+              }
+              fetchFilteredProducts({ filter: filterText });
+            }}
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         </div>
@@ -94,7 +159,7 @@ const FilterBar = ({
             {categories?.map((category) => (
               <button
                 key={category.id}
-                onClick={() => navigateToCategory(category)}
+                onClick={() => handleCategorySelect(category)}
                 className={`block w-full text-left px-3 py-2 text-sm rounded-md ${
                   selectedCategory === category.id
                     ? "bg-blue-50 text-blue-600"
@@ -134,7 +199,7 @@ const FilterBar = ({
                   type="number"
                   name="min"
                   value={priceValues[0]}
-                  onChange={handlePriceRangeChange}
+                  onChange={handlePriceChange}
                   className="w-full bg-transparent focus:outline-none text-gray-900"
                   min={priceRange.min}
                   max={priceRange.max}
@@ -147,7 +212,7 @@ const FilterBar = ({
                   type="number"
                   name="max"
                   value={priceValues[1]}
-                  onChange={handlePriceRangeChange}
+                  onChange={handlePriceChange}
                   className="w-full bg-transparent focus:outline-none text-gray-900"
                   min={priceRange.min}
                   max={priceRange.max}
@@ -156,16 +221,17 @@ const FilterBar = ({
             </div>
 
             <div className="px-1">
+              {/* Dual range slider */}
               <input
                 type="range"
                 min={priceRange.min}
                 max={priceRange.max}
                 value={priceValues[0]}
-                onChange={(e) =>
-                  handlePriceRangeChange({
+                onChange={(e) => {
+                  handlePriceChange({
                     target: { name: "min", value: e.target.value },
-                  })
-                }
+                  });
+                }}
                 className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm"
               />
               <input
@@ -173,39 +239,14 @@ const FilterBar = ({
                 min={priceRange.min}
                 max={priceRange.max}
                 value={priceValues[1]}
-                onChange={(e) =>
-                  handlePriceRangeChange({
+                onChange={(e) => {
+                  handlePriceChange({
                     target: { name: "max", value: e.target.value },
-                  })
-                }
+                  });
+                }}
                 className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm"
               />
             </div>
-
-            <button
-              onClick={() => {
-                dispatch(filterProducts());
-                // Use the sortOption prop when dispatching
-                dispatch(
-                  fetchProducts({
-                    limit: 12,
-                    offset: 0,
-                    category_id:
-                      selectedCategory !== "All" ? selectedCategory : "",
-                    filter: filterText,
-                    sort:
-                      sortOption && sortOption !== "featured" ? sortOption : "",
-                  })
-                );
-                // Close filters on mobile after applying
-                if (window.innerWidth < 768) {
-                  setShowFilters && setShowFilters(false);
-                }
-              }}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-            >
-              Apply Filter
-            </button>
           </div>
         )}
       </div>
