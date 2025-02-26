@@ -2,19 +2,19 @@ import React, { useState, useEffect } from "react";
 import { Filter } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { fetchCategories } from "../../store/actions/categoryActions";
-import { fetchProducts } from "../../store/actions/productActions";
+import { fetchCategories } from "../store/actions/categoryActions"; // Güncellendi
+import { fetchProducts } from "../store/actions/productActions"; // Güncellendi
 
-// Componentler
-import ShopBreadcrumb from "./ShopBreadcrumb";
-import GenderFilter from "./GenderFilter";
-import CategoryGrid from "./CategoryGrid";
-import FilterBar from "./FilterBar";
-import ProductToolbar from "./ProductToolbar";
-import ProductGrid from "./ProductGrid";
+// Componentler - yeni yollar
+import ShopBreadcrumb from "./shop/ShopBreadcrumb";
+import GenderFilter from "./shop/GenderFilter";
+import CategoryGrid from "./shop/CategoryGrid";
+import FilterBar from "./shop/FilterBar";
+import ProductToolbar from "./shop/ProductToolbar";
+import ProductGrid from "./shop/ProductGrid";
 
-// Hooks - src/hooks klasöründen import ediliyor
-import { useShopFilters } from "../../hooks/useShopFilters";
+// Hooks - güncellendi
+import { useShopFilters } from "../hooks/useShopFilters"; // Güncellendi
 
 function Shop() {
   const dispatch = useDispatch();

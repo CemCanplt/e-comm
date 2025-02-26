@@ -5,7 +5,7 @@ import Header from "./components/Header";
 import PageContent from "./components/PageContent";
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
-import Shop from "./components/shop/Shop";
+import Shop from "./components/Shop"; // Güncellenmiş yol
 import ProductDetail from "./components/ProductDetail";
 import Contact from "./components/content/Contact";
 import Team from "./components/Team";
