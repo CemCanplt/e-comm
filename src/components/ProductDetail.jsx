@@ -242,17 +242,13 @@ function ProductDetail() {
               setSelectedImage={setSelectedImage}
             />
 
-            {/* Desktop Product Info */}
-            <ProductInfo product={product} />
-
-            {/* Desktop Product Actions */}
-            <div className="w-full md:w-1/2 pl-4">
-              <ProductActions
-                quantity={quantity}
-                setQuantity={setQuantity}
-                handleAddToCard={handleAddToCard}
-              />
-            </div>
+            {/* Desktop Product Info - now includes quantity selector and Add to Card button */}
+            <ProductInfo
+              product={product}
+              quantity={quantity}
+              setQuantity={setQuantity}
+              handleAddToCard={handleAddToCard}
+            />
           </div>
         </div>
 
