@@ -25,20 +25,28 @@ export const setTotalProducts = (total) => ({
   payload: total,
 });
 
-// Thunk action to fetch products
+// Fetch products with filtering, sorting, and pagination
 export const fetchProducts = (params = {}) => {
   return async (dispatch) => {
-    dispatch(fetchProductsStart());
+    dispatch({
+      type: PRODUCT_ACTIONS.SET_FETCH_STATE,
+      payload: "FETCHING",
+    });
 
     try {
+      // Build query parameters for the API request
+      const queryParams = {
+        limit: params.limit || 12,
+        offset: params.offset || 0,
+        filter: params.filter || "",
+        category_id: params.category_id || "",
+        sort: params.sort || "",
+      };
+
+      console.log("Fetching products with params:", queryParams);
+
       const response = await axios.get(`${API_URL}/products`, {
-        params: {
-          limit: params.limit || 25,
-          offset: params.offset || 0,
-          filter: params.filter || "",
-          category_id: params.categoryId || "",
-          sort: params.sort || "",
-        },
+        params: queryParams,
       });
 
       const { total, products } = response.data;

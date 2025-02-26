@@ -8,6 +8,7 @@ import {
   List,
   ArrowLeft,
   ArrowRight,
+  Search,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -18,6 +19,8 @@ import {
 import { fetchProducts } from "../store/actions/productActions";
 import { Link, useHistory, useParams } from "react-router-dom";
 import { fetchCategories } from "../store/actions/categoryActions";
+import FilterBar from "./shop/FilterBar";
+import ProductGrid from "./shop/ProductGrid";
 
 // Category Card Component
 const CategoryCard = ({ category, onClick }) => (
@@ -161,7 +164,7 @@ const ProductCard = ({ product, viewMode, onClick }) => {
 function Shop() {
   const dispatch = useDispatch();
   const history = useHistory();
-  const { gender, categoryId } = useParams();
+  const { gender, categoryName, categoryId } = useParams();
   const {
     productList,
     sortBy,
@@ -188,6 +191,8 @@ function Shop() {
   ]);
   const [selectedGenderFilter, setSelectedGenderFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [filterText, setFilterText] = useState("");
+  const [sortOption, setSortOption] = useState("featured");
   const itemsPerPage = 12;
 
   // Check if products are loading
@@ -195,16 +200,52 @@ function Shop() {
 
   // Fetch data on mount
   useEffect(() => {
-    dispatch(fetchProducts({ limit: itemsPerPage, offset: 0 }));
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  // Handle URL params
+  // Handle URL params and fetch products based on them
   useEffect(() => {
+    // Set states based on URL parameters
     if (categoryId) setSelectedCategory(parseInt(categoryId));
     if (gender === "kadin") setSelectedGenderFilter("k");
     else if (gender === "erkek") setSelectedGenderFilter("e");
-  }, [categoryId, gender]);
+
+    // Build query parameters for API request
+    const params = {
+      limit: itemsPerPage,
+      offset: (page - 1) * itemsPerPage,
+    };
+
+    // Add category filter if present
+    if (categoryId) params.category_id = categoryId;
+
+    // Add sort parameter if present (and not default)
+    if (sortOption && sortOption !== "featured") {
+      // Convert UI sort option to API format
+      switch (sortOption) {
+        case "price-low":
+          params.sort = "price:asc";
+          break;
+        case "price-high":
+          params.sort = "price:desc";
+          break;
+        case "newest":
+          params.sort = "created_at:desc";
+          break;
+        case "rating-high":
+          params.sort = "rating:desc";
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Add text filter if present
+    if (filterText) params.filter = filterText;
+
+    // Fetch products with all applied parameters
+    dispatch(fetchProducts(params));
+  }, [dispatch, categoryId, gender, page, sortOption, filterText]);
 
   // Event handlers
   const handlePriceRangeChange = (e) => {
@@ -222,9 +263,11 @@ function Shop() {
 
   const navigateToCategory = (category) => {
     const genderText = category.gender === "k" ? "kadin" : "erkek";
+    // Navigate while preserving other query params
     history.push(
       `/shop/${genderText}/${category.title.toLowerCase()}/${category.id}`
     );
+    // Category ID will trigger a new fetch in the useEffect
   };
 
   const toggleFilterSection = (section) => {
@@ -239,23 +282,29 @@ function Shop() {
     dispatch(setPriceRange([priceRange.min, priceRange.max]));
     setSelectedCategory("All");
     setSelectedGenderFilter("all");
+    setFilterText("");
+    setSortOption("featured");
     history.push("/shop");
-    dispatch(filterProducts());
+    // This will trigger a new fetch via useEffect
   };
 
   // Handle pagination
   const handlePageChange = (newPage) => {
     setPage(newPage);
-    const offset = (newPage - 1) * itemsPerPage;
-    dispatch(fetchProducts({ limit: itemsPerPage, offset }));
-    // Scroll to top
+    // Page change will trigger a new fetch via useEffect with adjusted offset
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Apply filter handler
+  const handleApplyFilter = (e) => {
+    e.preventDefault();
+    // Filter application is handled by the state changes and useEffect
   };
 
   // Calculate total pages
   const totalPages = Math.ceil(total / itemsPerPage);
 
-  // Filtered data
+  // Filtered data for UI display
   const filteredCategories = categories
     ? selectedGenderFilter === "all"
       ? categories
@@ -401,174 +450,28 @@ function Shop() {
 
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar filters */}
-          <aside
-            className={`${
-              showFilters ? "block" : "hidden"
-            } md:block w-full md:w-64 bg-white p-5 rounded-lg shadow-sm sticky top-4 self-start transition-all duration-300 ease-in-out`}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900">Filters</h2>
-              <button
-                onClick={resetFilters}
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                Reset All
-              </button>
-            </div>
-
-            {/* Categories filter */}
-            <div className="mb-6 border-b pb-6">
-              <div
-                className="flex items-center justify-between cursor-pointer mb-4"
-                onClick={() => toggleFilterSection("categories")}
-              >
-                <h3 className="font-bold text-gray-900">Categories</h3>
-                {expandedFilterSections.categories ? (
-                  <ChevronUp className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                )}
-              </div>
-
-              {expandedFilterSections.categories && (
-                <ul className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                  <li>
-                    <button
-                      onClick={() => {
-                        setSelectedCategory("All");
-                        history.push("/shop");
-                      }}
-                      className={`flex items-center w-full text-left py-1 px-2 rounded ${
-                        selectedCategory === "All"
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      <span className="flex-1">All Categories</span>
-                      <span className="text-xs text-gray-400">({total})</span>
-                    </button>
-                  </li>
-                  {categoriesLoading ? (
-                    <li className="py-1 px-2 text-gray-400 italic">
-                      Loading categories...
-                    </li>
-                  ) : (
-                    categories.map((category) => (
-                      <li key={category.id}>
-                        <button
-                          onClick={() => {
-                            setSelectedCategory(category.id);
-                            navigateToCategory(category);
-                          }}
-                          className={`flex items-center w-full text-left py-1 px-2 rounded ${
-                            selectedCategory === category.id
-                              ? "bg-blue-50 text-blue-600"
-                              : "text-gray-600 hover:bg-gray-50"
-                          }`}
-                        >
-                          <span className="flex-1 truncate">
-                            {category.title}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            ({category.products_count || 0})
-                          </span>
-                        </button>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              )}
-            </div>
-
-            {/* Price range filter */}
-            <div>
-              <div
-                className="flex items-center justify-between cursor-pointer mb-4"
-                onClick={() => toggleFilterSection("price")}
-              >
-                <h3 className="font-bold text-gray-900">Price Range</h3>
-                {expandedFilterSections.price ? (
-                  <ChevronUp className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                )}
-              </div>
-
-              {expandedFilterSections.price && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="bg-gray-50 rounded px-3 py-2 w-[45%]">
-                      <label className="block text-xs text-gray-500 mb-1">
-                        Min
-                      </label>
-                      <input
-                        type="number"
-                        name="min"
-                        value={priceValues[0]}
-                        onChange={handlePriceRangeChange}
-                        className="w-full bg-transparent focus:outline-none text-gray-900"
-                        min={priceRange.min}
-                        max={priceRange.max}
-                      />
-                    </div>
-                    <span className="text-gray-300">—</span>
-                    <div className="bg-gray-50 rounded px-3 py-2 w-[45%]">
-                      <label className="block text-xs text-gray-500 mb-1">
-                        Max
-                      </label>
-                      <input
-                        type="number"
-                        name="max"
-                        value={priceValues[1]}
-                        onChange={handlePriceRangeChange}
-                        className="w-full bg-transparent focus:outline-none text-gray-900"
-                        min={priceRange.min}
-                        max={priceRange.max}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="px-1">
-                    <input
-                      type="range"
-                      min={priceRange.min}
-                      max={priceRange.max}
-                      value={priceValues[0]}
-                      onChange={(e) =>
-                        handlePriceRangeChange({
-                          target: { name: "min", value: e.target.value },
-                        })
-                      }
-                      className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm"
-                    />
-                    <input
-                      type="range"
-                      min={priceRange.min}
-                      max={priceRange.max}
-                      value={priceValues[1]}
-                      onChange={(e) =>
-                        handlePriceRangeChange({
-                          target: { name: "max", value: e.target.value },
-                        })
-                      }
-                      className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => dispatch(filterProducts())}
-                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                  >
-                    Apply Filter
-                  </button>
-                </div>
-              )}
-            </div>
-          </aside>
+          <FilterBar
+            filterText={filterText}
+            setFilterText={setFilterText}
+            expandedFilterSections={expandedFilterSections}
+            toggleFilterSection={toggleFilterSection}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            navigateToCategory={navigateToCategory}
+            priceValues={priceValues}
+            handlePriceRangeChange={handlePriceRangeChange}
+            priceRange={priceRange}
+            dispatch={dispatch}
+            filterProducts={filterProducts}
+            history={history}
+            showFilters={showFilters}
+            resetFilters={resetFilters}
+          />
 
           {/* Main content */}
           <main className="flex-1">
-            {/* Toolbar */}
+            {/* Toolbar - Updated for search and sort */}
             <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
                 <div className="flex items-center">
@@ -578,17 +481,37 @@ function Shop() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* Filter/Search Input */}
+                  <form
+                    onSubmit={handleApplyFilter}
+                    className="flex items-center"
+                  >
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={filterText}
+                        onChange={(e) => setFilterText(e.target.value)}
+                        placeholder="Search products..."
+                        className="pl-9 pr-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
+                  </form>
+
+                  {/* Sort Select - Updated with more options */}
                   <select
-                    value={sortBy}
-                    onChange={(e) => dispatch(setSortBy(e.target.value))}
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
                     className="bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="featured">Featured</option>
                     <option value="price-low">Price: Low to High</option>
                     <option value="price-high">Price: High to Low</option>
                     <option value="newest">Newest</option>
+                    <option value="rating-high">Highest Rated</option>
                   </select>
 
+                  {/* View Mode Toggles */}
                   <div className="border rounded-md flex">
                     <button
                       onClick={() => setViewMode("grid")}
@@ -615,127 +538,16 @@ function Shop() {
               </div>
             </div>
 
-            {/* Products */}
-            {isProductsLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-white rounded-lg shadow-sm p-4 h-72"
-                  >
-                    <div className="bg-gray-200 h-40 mb-4 rounded"></div>
-                    <div className="bg-gray-200 h-4 w-3/4 mb-2 rounded"></div>
-                    <div className="bg-gray-200 h-4 w-1/2 mb-4 rounded"></div>
-                    <div className="bg-gray-200 h-4 w-1/3 rounded"></div>
-                  </div>
-                ))}
-              </div>
-            ) : displayedProducts.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  No Products Found
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  Try adjusting your filters or search criteria.
-                </p>
-                <button
-                  onClick={resetFilters}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            ) : (
-              <>
-                <div
-                  className={`${
-                    viewMode === "list"
-                      ? "space-y-4"
-                      : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                  }`}
-                >
-                  {displayedProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      viewMode={viewMode}
-                      onClick={(product) => {
-                        console.log("Clicked product:", product.id);
-                        // No need to call history.push here, it's handled in the component
-                      }}
-                    />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center mt-8">
-                    <nav className="flex items-center space-x-1">
-                      <button
-                        onClick={() => handlePageChange(Math.max(1, page - 1))}
-                        disabled={page === 1}
-                        className={`px-3 py-2 rounded ${
-                          page === 1
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        <ArrowLeft className="h-5 w-5" />
-                      </button>
-
-                      {[...Array(totalPages)].map((_, i) => {
-                        // Only show limited page numbers with ellipsis
-                        if (
-                          totalPages <= 7 ||
-                          i === 0 ||
-                          i === totalPages - 1 ||
-                          (page - 3 <= i && i <= page + 1)
-                        ) {
-                          return (
-                            <button
-                              key={i}
-                              onClick={() => handlePageChange(i + 1)}
-                              className={`w-10 h-10 flex items-center justify-center rounded-full ${
-                                page === i + 1
-                                  ? "bg-blue-600 text-white"
-                                  : "text-gray-700 hover:bg-gray-100"
-                              }`}
-                            >
-                              {i + 1}
-                            </button>
-                          );
-                        } else if (
-                          (i === 1 && page > 4) ||
-                          (i === totalPages - 2 && page < totalPages - 4)
-                        ) {
-                          return (
-                            <span key={i} className="px-2">
-                              ...
-                            </span>
-                          );
-                        } else {
-                          return null;
-                        }
-                      })}
-
-                      <button
-                        onClick={() =>
-                          handlePageChange(Math.min(totalPages, page + 1))
-                        }
-                        disabled={page === totalPages}
-                        className={`px-3 py-2 rounded ${
-                          page === totalPages
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        <ArrowRight className="h-5 w-5" />
-                      </button>
-                    </nav>
-                  </div>
-                )}
-              </>
-            )}
+            {/* Products Grid - Now using the ProductGrid component */}
+            <ProductGrid
+              isLoading={isProductsLoading}
+              products={displayedProducts}
+              viewMode={viewMode}
+              totalPages={totalPages}
+              page={page}
+              handlePageChange={handlePageChange}
+              resetFilters={resetFilters}
+            />
           </main>
         </div>
       </div>

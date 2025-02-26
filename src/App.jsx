@@ -31,20 +31,32 @@ function App() {
           <Route exact path="/" component={PageContent} />
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
-          
+
           {/* Ürün detay rotasını en spesifik rotalardan önce tanımlayalım */}
           <Route path="/shop/product/:id" component={ProductDetail} />
-          
+
+          {/* Shop routes with parameters */}
           <Route exact path="/shop" component={Shop} />
           <Route exact path="/shop/:gender" component={Shop} />
-          <Route path="/shop/:gender/:categoryName/:categoryId" component={Shop} />
+          <Route
+            exact
+            path="/shop/:gender/:categoryName/:categoryId"
+            component={Shop}
+          />
 
           {/* Diğer rotalar */}
           <Route path="/contact" component={Contact} />
           <Route path="/team" component={Team} />
           <Route path="/aboutUs" component={AboutUsPage} />
           <Route path="/cart" component={ShoppingCart} />
-          <Route path="*" component={() => <h1>404 Not Found</h1>} />
+          {/* Add any other routes here */}
+
+          {/* Fallback route */}
+          <Route
+            component={() => (
+              <div className="p-10 text-center">Page not found</div>
+            )}
+          />
         </Switch>
       </main>
       <Footer />
