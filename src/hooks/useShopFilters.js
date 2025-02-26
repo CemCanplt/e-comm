@@ -89,7 +89,33 @@ export const useShopFilters = ({
     }
   }, [location.search, dispatch]);
 
-  // Ürün listeleme fonksiyonu - now using the already defined updateUrlWithFilters function
+  // Add this effect to prevent filter parameter from being reapplied when cleared
+  useEffect(() => {
+    // Skip URL parameter extraction if we just cleared the filter
+    if (location.search.includes("filter=") === false && filterText === "") {
+      return;
+    }
+
+    const searchParams = new URLSearchParams(location.search);
+    const filter = searchParams.get("filter") || "";
+    const sort = searchParams.get("sort") || "featured";
+    const pageParam = parseInt(searchParams.get("page"), 10) || 1;
+
+    // Only update filter text if it's actually different from current state
+    if (filter !== filterText) {
+      setFilterTextState(filter);
+    }
+
+    setSortOption(sort);
+    setPage(pageParam);
+
+    // Apply the sort option to Redux state
+    if (sort !== "featured") {
+      dispatch(setSortBy(sort));
+    }
+  }, [location.search, filterText, dispatch]);
+
+  // Ürün listeleme fonksiyonu - iyileştirilmiş ve tamamlanmış hali
   const fetchFilteredProducts = useCallback(
     (additionalParams = {}) => {
       const params = {
@@ -97,18 +123,25 @@ export const useShopFilters = ({
         offset: (page - 1) * itemsPerPage,
       };
 
+      // Kategori ID'si varsa ekle
       if (categoryId) {
         params.category_id = parseInt(categoryId);
       }
 
-      if (filterText && filterText.trim() !== "") {
+      // Filtre değeri için kontrol
+      if (additionalParams.hasOwnProperty("filter")) {
+        if (additionalParams.filter && additionalParams.filter.trim() !== "") {
+          params.filter = additionalParams.filter.trim();
+        }
+        // filter parametresi boş geldiyse hiç ekleme
+      } else if (filterText && filterText.trim() !== "") {
+        // Mevcut filterText varsa kullan
         params.filter = filterText.trim();
       }
 
-      // Get sort option from URL or state
+      // Sıralama parametresi
       const searchParams = new URLSearchParams(location.search);
       const urlSortOption = searchParams.get("sort");
-
       const effectiveSortOption =
         additionalParams.sort || urlSortOption || sortOption;
 
@@ -116,26 +149,31 @@ export const useShopFilters = ({
         params.sort = effectiveSortOption;
       }
 
-      // Handle price range if set
-      if (
-        priceValues &&
-        (priceValues[0] > priceRange?.min || priceValues[1] < priceRange?.max)
-      ) {
+      // Fiyat aralığı parametreleri
+      if (additionalParams.hasOwnProperty("priceMin")) {
+        params.priceMin = additionalParams.priceMin;
+      } else if (priceValues && priceValues[0] > priceRange?.min) {
         params.priceMin = priceValues[0];
+      }
+
+      if (additionalParams.hasOwnProperty("priceMax")) {
+        params.priceMax = additionalParams.priceMax;
+      } else if (priceValues && priceValues[1] < priceRange?.max) {
         params.priceMax = priceValues[1];
       }
 
-      // Handle gender filtering
+      // Cinsiyet filtresi
       if (selectedGenderFilter && selectedGenderFilter !== "all") {
         params.gender = selectedGenderFilter;
       }
 
-      // Include any additional params passed directly
+      // Diğer ek parametreleri ekle
       Object.assign(params, additionalParams);
 
-      // Update URL
+      // URL'yi güncelle
       updateUrlWithFilters(params);
 
+      // Ürünleri getir
       dispatch(fetchProducts(params));
     },
     [
@@ -396,18 +434,32 @@ export const useShopFilters = ({
     fetchFilteredProducts({ offset: (newPage - 1) * itemsPerPage });
   };
 
-  const setFilterText = (value) => {
-    // Make sure we're dealing with a string value
-    const textValue = typeof value === "string" ? value : "";
+  // setFilterText fonksiyonu - URL ve API senkronizasyonu iyileştirildi
+  const setFilterText = useCallback(
+    (value) => {
+      // Basitçe state'i güncelle
+      setFilterTextState(value);
 
-    // Update the state with the string value
-    setFilterTextState(textValue);
+      // URL güncellemesi yap - doğrudan ve net bir şekilde
+      const currentParams = new URLSearchParams(location.search);
 
-    // If the value is empty, make sure we actually clear it
-    if (textValue === "") {
-      fetchFilteredProducts({ filter: "" });
-    }
-  };
+      // Değer varsa ekle, yoksa sil
+      if (value && value.trim()) {
+        currentParams.set("filter", value.trim());
+      } else {
+        currentParams.delete("filter");
+      }
+
+      // Yeni URL oluştur ve geçmişi kirletmeden güncelle
+      const basePath = location.pathname;
+      const newUrl =
+        basePath +
+        (currentParams.toString() ? `?${currentParams.toString()}` : "");
+
+      history.replace(newUrl);
+    },
+    [history, location.pathname, location.search]
+  );
 
   return {
     selectedCategory,

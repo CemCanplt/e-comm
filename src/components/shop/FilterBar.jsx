@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
-import { fetchProducts } from "../../store/actions/productActions";
 
 const FilterBar = ({
   filterText,
@@ -21,49 +20,76 @@ const FilterBar = ({
   setShowFilters,
   fetchFilteredProducts,
 }) => {
-  // Create refs for timeouts
-  const searchTimeoutRef = useRef(null);
+  // Tamamen bağımsız lokal input state
+  const [inputValue, setInputValue] = useState(filterText);
+
+  // Çeşitli referanslar
+  const searchInputRef = useRef(null);
   const priceTimeoutRef = useRef(null);
 
-  // Clean up timeouts when component unmounts
+  // Önemli: Input değişikliği *SADECE* lokal değeri günceller, global state'i değil
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  // Enter tuşu veya Search butonuna basıldığında filtreleme yapılır
+  const applyFilter = () => {
+    // Filtreyi global state'e bildir ve API'yi çağır
+    setFilterText(inputValue);
+    fetchFilteredProducts({ filter: inputValue });
+  };
+
+  // Enter tuşuna basıldığında filtreleme yap
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      applyFilter();
+    }
+  };
+
+  // Temizle butonuna tıklandığında
+  const clearSearch = () => {
+    // Lokal input değerini temizle
+    setInputValue("");
+
+    // Input'a fokuslan
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+
+    // Global state ve URL'yi temizle
+    setFilterText("");
+    fetchFilteredProducts({ filter: "" });
+  };
+
+  // Global filtre metni değiştiğinde input güncelleme
+  useEffect(() => {
+    // Ancak input odaklanmış değilse ve değer güncel değilse
+    if (
+      document.activeElement !== searchInputRef.current &&
+      filterText !== inputValue
+    ) {
+      setInputValue(filterText || "");
+    }
+  }, [filterText]);
+
+  // Component unmount olduğunda timer'ları temizle
   useEffect(() => {
     return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
       if (priceTimeoutRef.current) clearTimeout(priceTimeoutRef.current);
     };
   }, []);
 
-  // Kategori seçim işleyicisini iyileştir
+  // Kategori seçimi
   const handleCategorySelect = (category) => {
     setSelectedCategory(category.id);
     navigateToCategory(category);
 
-    // Mobil görünümde filtreleri kapat
     if (window.innerWidth < 768) {
       setShowFilters && setShowFilters(false);
     }
   };
 
-  // Handle search input change with custom debounce
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-
-    // Set the filter text value - this should correctly update the UI
-    setFilterText(value);
-
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // Set new timeout to apply the filter after typing stops
-    searchTimeoutRef.current = setTimeout(() => {
-      // Only trigger API call if there's value or if we're clearing previous filter
-      fetchFilteredProducts({ filter: value });
-    }, 500);
-  };
-
-  // Handle price range changes with custom debounce
+  // Fiyat aralığı değişikliği
   const handlePriceChange = (e) => {
     const { name, value } = e.target;
     const newValue = Number(value);
@@ -78,12 +104,10 @@ const FilterBar = ({
       handlePriceRangeChange(e);
     }
 
-    // Clear previous timeout
     if (priceTimeoutRef.current) {
       clearTimeout(priceTimeoutRef.current);
     }
 
-    // Set new timeout
     priceTimeoutRef.current = setTimeout(() => {
       fetchFilteredProducts({ priceMin: newMin, priceMax: newMax });
     }, 500);
@@ -105,31 +129,43 @@ const FilterBar = ({
         </button>
       </div>
 
-      {/* Search Filter */}
+      {/* Search Filter - Completely Redesigned */}
       <div className="mb-6 border-b pb-6">
         <div className="flex items-center justify-between cursor-pointer mb-4">
           <h3 className="font-bold text-gray-900">Search</h3>
         </div>
-        <div className="relative">
-          <input
-            type="text"
-            value={filterText}
-            onChange={handleSearchChange}
-            placeholder="Search products..."
-            className="w-full pl-9 pr-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-            onBlur={() => {
-              // Ensure the filter text state is synced when the input loses focus
-              if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
-              }
-              fetchFilteredProducts({ filter: filterText });
-            }}
-          />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className="flex items-stretch w-full">
+          <div className="relative flex-grow">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Search"
+              className="w-full pl-9 pr-10 py-2 border rounded-l-md text-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            {inputValue && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-100"
+                aria-label="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={applyFilter}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-r-md flex items-center justify-center"
+          >
+            <Search size={16} />
+          </button>
         </div>
       </div>
 
-      {/* Categories filter - Improved version */}
+      {/* Categories filter */}
       <div className="mb-6 border-b pb-6">
         <div
           className="flex items-center justify-between cursor-pointer mb-4"
@@ -226,7 +262,6 @@ const FilterBar = ({
             </div>
 
             <div className="px-1">
-              {/* Dual range slider */}
               <input
                 type="range"
                 min={priceRange.min}
