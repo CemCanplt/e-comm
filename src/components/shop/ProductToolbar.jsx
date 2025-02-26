@@ -11,7 +11,7 @@ const ProductToolbar = ({
   viewMode,
   setViewMode,
   updateUrlWithFilters,
-  fetchFilteredProducts
+  fetchFilteredProducts,
 }) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
@@ -23,33 +23,6 @@ const ProductToolbar = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Filter/Search Input */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              updateUrlWithFilters();
-              fetchFilteredProducts();
-            }}
-            className="flex items-center"
-          >
-            <div className="relative">
-              <input
-                type="text"
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                placeholder="Search products..."
-                className="pl-9 pr-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            </div>
-            <button
-              type="submit"
-              className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Filter
-            </button>
-          </form>
-
           {/* Sort Select */}
           <select
             value={sortOption}

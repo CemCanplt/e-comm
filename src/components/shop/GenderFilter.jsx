@@ -1,41 +1,65 @@
 import React from "react";
+import { Circle, Mars, Venus } from "lucide-react";
 
 const GenderFilter = ({ selectedGenderFilter, onGenderChange, title }) => {
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4 md:mb-0">
-        {title}
-      </h1>
-      <div className="flex items-center space-x-2">
+    <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4 md:mb-0">{title}</h1>
+
+      <div className="flex gap-4">
         <button
           onClick={() => onGenderChange("all")}
-          className={`px-4 py-2 rounded-md transition-colors ${
+          className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
             selectedGenderFilter === "all"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100 border"
+              ? "bg-emerald-100"
+              : "hover:bg-gray-100"
           }`}
+          aria-label="View all products"
         >
-          All
+          <Circle
+            className={`w-6 h-6 ${
+              selectedGenderFilter === "all"
+                ? "text-emerald-600 stroke-2"
+                : "text-gray-500"
+            }`}
+            fill={
+              selectedGenderFilter === "all"
+                ? "rgba(16, 185, 129, 0.2)"
+                : "none"
+            }
+          />
         </button>
+
         <button
           onClick={() => onGenderChange("e")}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            selectedGenderFilter === "e"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100 border"
+          className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+            selectedGenderFilter === "e" ? "bg-blue-100" : "hover:bg-gray-100"
           }`}
+          aria-label="View men's products"
         >
-          Men
+          <Mars
+            className={`w-6 h-6 ${
+              selectedGenderFilter === "e"
+                ? "text-blue-600 stroke-2"
+                : "text-gray-500"
+            }`}
+          />
         </button>
+
         <button
           onClick={() => onGenderChange("k")}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            selectedGenderFilter === "k"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100 border"
+          className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+            selectedGenderFilter === "k" ? "bg-pink-100" : "hover:bg-gray-100"
           }`}
+          aria-label="View women's products"
         >
-          Women
+          <Venus
+            className={`w-6 h-6 ${
+              selectedGenderFilter === "k"
+                ? "text-pink-600 stroke-2"
+                : "text-gray-500"
+            }`}
+          />
         </button>
       </div>
     </div>
