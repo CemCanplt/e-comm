@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  ShoppingBag,
+  Venus as WomanIcon,
+  Mars as ManIcon,
+} from "lucide-react";
 import { fetchCategories } from "../../store/actions/categoryActions";
 
 function Navigation() {
@@ -62,13 +67,10 @@ function Navigation() {
             <div className="flex flex-wrap md:flex-nowrap md:max-w-4xl">
               {/* Women's section */}
               <div className="w-full md:w-1/2 px-4 py-2 md:border-r md:min-w-[14rem]">
-                <Link
-                  to="/shop/kadin"
-                  className="block font-medium text-gray-900 mb-2 hover:text-blue-600 transition-colors"
-                  onClick={() => setShowCategoryMenu(false)}
-                >
-                  Women
-                </Link>
+                <div className="flex items-center font-medium text-gray-900 mb-2">
+                  <WomanIcon className="h-5 w-5 text-pink-600 mr-2" />
+                  <span>Women</span>
+                </div>
                 <ul className="space-y-1 mt-2">
                   {womenCategories.map((category) => (
                     <li key={`women-${category.id}`}>
@@ -88,13 +90,10 @@ function Navigation() {
 
               {/* Men's section */}
               <div className="w-full md:w-1/2 px-4 py-2 md:min-w-[14rem]">
-                <Link
-                  to="/shop/erkek"
-                  className="block font-medium text-gray-900 mb-2 hover:text-blue-600 transition-colors"
-                  onClick={() => setShowCategoryMenu(false)}
-                >
-                  Men
-                </Link>
+                <div className="flex items-center font-medium text-gray-900 mb-2">
+                  <ManIcon className="h-5 w-5 text-indigo-600 mr-2" />
+                  <span>Men</span>
+                </div>
                 <ul className="space-y-1 mt-2">
                   {menCategories.map((category) => (
                     <li key={`men-${category.id}`}>
@@ -111,18 +110,6 @@ function Navigation() {
                   ))}
                 </ul>
               </div>
-            </div>
-
-            <div className="border-t my-2"></div>
-
-            <div className="px-4 pt-2">
-              <Link
-                to="/shop"
-                className="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700"
-                onClick={() => setShowCategoryMenu(false)}
-              >
-                View All Products
-              </Link>
             </div>
           </div>
         )}

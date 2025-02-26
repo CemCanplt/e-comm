@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ShoppingBag,
+  Venus as WomanIcon,
+  Mars as ManIcon,
+} from "lucide-react";
 
 function MobileMenu({ isOpen, toggleMenu, isAuthenticated }) {
   const [showCategories, setShowCategories] = useState(false);
@@ -45,15 +51,12 @@ function MobileMenu({ isOpen, toggleMenu, isAuthenticated }) {
 
             {showCategories && (
               <div className="bg-gray-50 py-2">
-                {/* Women's section */}
+                {/* Women's categories */}
                 <div className="mb-4">
-                  <Link
-                    to="/shop/kadin"
-                    className="block text-lg font-medium text-gray-900 px-4 py-2 hover:bg-gray-100"
-                    onClick={toggleMenu}
-                  >
-                    Women
-                  </Link>
+                  <div className="font-medium text-gray-900 px-4 py-2 flex items-center">
+                    <WomanIcon className="h-5 w-5 text-pink-600 mr-2" />
+                    <span>Women</span>
+                  </div>
                   <ul className="mt-1">
                     {womenCategories.map((category) => (
                       <li key={`women-mobile-${category.id}`}>
@@ -71,15 +74,12 @@ function MobileMenu({ isOpen, toggleMenu, isAuthenticated }) {
                   </ul>
                 </div>
 
-                {/* Men's section */}
+                {/* Men's categories */}
                 <div className="mb-4">
-                  <Link
-                    to="/shop/erkek"
-                    className="block text-lg font-medium text-gray-900 px-4 py-2 hover:bg-gray-100"
-                    onClick={toggleMenu}
-                  >
-                    Men
-                  </Link>
+                  <div className="font-medium text-gray-900 px-4 py-2 flex items-center">
+                    <ManIcon className="h-5 w-5 text-indigo-600 mr-2" />
+                    <span>Men</span>
+                  </div>
                   <ul className="mt-1">
                     {menCategories.map((category) => (
                       <li key={`men-mobile-${category.id}`}>
@@ -95,16 +95,6 @@ function MobileMenu({ isOpen, toggleMenu, isAuthenticated }) {
                       </li>
                     ))}
                   </ul>
-                </div>
-
-                <div className="px-4">
-                  <Link
-                    to="/shop"
-                    className="block px-4 py-2 text-(--ikinci-metin-rengi) text-2xl font-semibold hover:bg-gray-100"
-                    onClick={toggleMenu}
-                  >
-                    View All Products
-                  </Link>
                 </div>
               </div>
             )}
