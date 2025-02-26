@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { autoLogin } from "./store/actions/userActions";
 import AboutUsPage from "./components/content/AboutUsPage";
+import ShoppingCart from "./components/ShoppingCart";
 
 function App() {
   const dispatch = useDispatch();
@@ -30,17 +31,19 @@ function App() {
           <Route exact path="/" component={PageContent} />
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
-          <Route exact path="/shop" component={Shop} />
-          <Route path="/shop/:gender" component={Shop} />
-          <Route
-            path="/shop/:gender/:categoryName/:categoryId"
-            component={Shop}
-          />
+          
+          {/* Ürün detay rotasını en spesifik rotalardan önce tanımlayalım */}
           <Route path="/shop/product/:id" component={ProductDetail} />
+          
+          <Route exact path="/shop" component={Shop} />
+          <Route exact path="/shop/:gender" component={Shop} />
+          <Route path="/shop/:gender/:categoryName/:categoryId" component={Shop} />
+
+          {/* Diğer rotalar */}
           <Route path="/contact" component={Contact} />
           <Route path="/team" component={Team} />
           <Route path="/aboutUs" component={AboutUsPage} />
-
+          <Route path="/cart" component={ShoppingCart} />
           <Route path="*" component={() => <h1>404 Not Found</h1>} />
         </Switch>
       </main>

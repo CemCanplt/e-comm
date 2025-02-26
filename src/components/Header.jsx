@@ -1,9 +1,18 @@
-import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  LogOut,
+  Loader,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/reducers/userReducer";
-import { refreshUserData, fetchCategories } from "../store/actions/userActions";
+import { refreshUserData } from "../store/actions/userActions";
+import { fetchCategories } from "../store/actions/categoryActions";
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +22,31 @@ function Header() {
   const authMenuRef = useRef(null);
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.user);
-  const { categories } = useSelector((state) => state.categories);
+  const { categories, loading: categoriesLoading } = useSelector(
+    (state) => state.categories
+  );
+
+  // Cart dropdown functionality
+  const [showCartDropdown, setShowCartDropdown] = useState(false);
+  const cartDropdownRef = useRef(null);
+  const { cart } = useSelector((state) => state.shoppingCart);
+
+  // Calculate total items in cart
+  const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+  // Close cart dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        cartDropdownRef.current &&
+        !cartDropdownRef.current.contains(event.target)
+      ) {
+        setShowCartDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -63,6 +96,13 @@ function Header() {
       dispatch(refreshUserData());
     }
   }, [dispatch]);
+
+  // Dropdown açıldığında kategorileri yükle
+  useEffect(() => {
+    if (isDropdownOpen && (!categories || categories.length === 0)) {
+      dispatch(fetchCategories());
+    }
+  }, [isDropdownOpen, dispatch, categories]);
 
   const renderAuthenticatedSection = () => (
     <div className="relative" ref={dropdownRef}>
@@ -144,6 +184,83 @@ function Header() {
     );
   };
 
+  const renderCartDropdown = () => (
+    <div className="relative" ref={cartDropdownRef}>
+      <button
+        className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 relative"
+        aria-label="Shopping cart"
+        onClick={() => setShowCartDropdown(!showCartDropdown)}
+      >
+        <ShoppingCart className="h-6 w-6 text-gray-600 hover:text-gray-900" />
+        {cartItemsCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+            {cartItemsCount}
+          </span>
+        )}
+      </button>
+
+      {showCartDropdown && (
+        <div className="absolute right-0 mt-2 py-2 w-72 bg-white rounded-lg shadow-xl z-50">
+          <div className="px-4 py-2 border-b">
+            <p className="text-sm font-medium text-gray-900">
+              {cartItemsCount} {cartItemsCount === 1 ? "item" : "items"} in cart
+            </p>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto">
+            {cart.length === 0 ? (
+              <div className="px-4 py-4 text-center text-gray-500 text-sm">
+                Your cart is empty
+              </div>
+            ) : (
+              cart.slice(0, 3).map((item) => (
+                <div
+                  key={item.id}
+                  className="px-4 py-3 border-b last:border-b-0 flex items-center"
+                >
+                  <div className="w-12 h-12 flex-shrink-0">
+                    <img
+                      src={
+                        item.image ||
+                        "https://placehold.co/100x100/gray/white?text=No+Image"
+                      }
+                      alt={item.name}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {item.quantity} × ${item.price?.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+
+            {cart.length > 3 && (
+              <div className="px-4 py-2 text-center text-sm text-gray-500">
+                +{cart.length - 3} more items
+              </div>
+            )}
+          </div>
+
+          <div className="px-4 pt-2 pb-4 border-t mt-2">
+            <Link
+              to="/cart"
+              className="block w-full px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
+              onClick={() => setShowCartDropdown(false)}
+            >
+              View Cart
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       <header className="w-full py-4 px-8 bg-white shadow-sm flex items-center">
@@ -180,7 +297,12 @@ function Header() {
           <div className="relative group" ref={dropdownRef}>
             <button
               className="text-(--ikinci-metin-rengi) hover:text-(--Bandage-Rengi)"
-              onMouseEnter={() => setIsDropdownOpen(true)}
+              onMouseEnter={() => {
+                setIsDropdownOpen(true);
+                if (!categories || categories.length === 0) {
+                  dispatch(fetchCategories());
+                }
+              }}
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               Categories
@@ -192,69 +314,82 @@ function Header() {
                 onMouseLeave={() => setIsDropdownOpen(false)}
               >
                 {/* Gender categories */}
-                <div className="flex">
-                  {/* Men's categories */}
-                  <div className="w-1/2 border-r">
-                    <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
-                      Erkek
-                    </h3>
-                    <div className="py-1">
-                      {categoriesByGender.erkek?.map((category) => (
-                        <Link
-                          key={category.id}
-                          to={`/shop/erkek/${category.title.toLowerCase()}/${
-                            category.id
-                          }`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          {category.title}
-                        </Link>
-                      ))}
-                      {!categoriesByGender.erkek?.length && (
-                        <p className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </p>
-                      )}
-                    </div>
+                {categoriesLoading ? (
+                  <div className="px-4 py-8 text-center">
+                    <Loader className="h-6 w-6 mx-auto animate-spin text-blue-600" />
+                    <p className="mt-2 text-sm text-gray-500">
+                      Loading categories...
+                    </p>
                   </div>
-                  {/* Women's categories */}
-                  <div className="w-1/2">
-                    <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
-                      Kadın
-                    </h3>
-                    <div className="py-1">
-                      {categoriesByGender.kadin?.map((category) => (
-                        <Link
-                          key={category.id}
-                          to={`/shop/kadin/${category.title.toLowerCase()}/${
-                            category.id
-                          }`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          {category.title}
-                        </Link>
-                      ))}
-                      {!categoriesByGender.kadin?.length && (
-                        <p className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </p>
-                      )}
+                ) : (
+                  <>
+                    <div className="flex">
+                      {/* Men's categories */}
+                      <div className="w-1/2 border-r">
+                        <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
+                          Erkek
+                        </h3>
+                        <div className="py-1">
+                          {categoriesByGender.erkek?.length > 0 ? (
+                            categoriesByGender.erkek.map((category) => (
+                              <Link
+                                key={category.id}
+                                to={`/shop/erkek/${category.title.toLowerCase()}/${
+                                  category.id
+                                }`}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                onClick={() => setIsDropdownOpen(false)}
+                              >
+                                {category.title}
+                              </Link>
+                            ))
+                          ) : (
+                            <p className="px-4 py-2 text-sm text-gray-500">
+                              Kategori bulunamadı
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {/* Women's categories */}
+                      <div className="w-1/2">
+                        <h3 className="px-4 py-2 font-medium text-gray-900 bg-gray-100">
+                          Kadın
+                        </h3>
+                        <div className="py-1">
+                          {categoriesByGender.kadin?.length > 0 ? (
+                            categoriesByGender.kadin.map((category) => (
+                              <Link
+                                key={category.id}
+                                to={`/shop/kadin/${category.title.toLowerCase()}/${
+                                  category.id
+                                }`}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                onClick={() => setIsDropdownOpen(false)}
+                              >
+                                {category.title}
+                              </Link>
+                            ))
+                          ) : (
+                            <p className="px-4 py-2 text-sm text-gray-500">
+                              Kategori bulunamadı
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* View all categories link */}
-                <div className="mt-2 pt-1 border-t">
-                  <Link
-                    to="/shop"
-                    className="block px-4 py-2 text-sm text-center font-medium text-blue-600 hover:bg-gray-100"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    View All Categories
-                  </Link>
-                </div>
+                    {/* View all categories link */}
+                    <div className="mt-2 pt-1 border-t">
+                      <Link
+                        to="/shop"
+                        className="block px-4 py-2 text-sm text-center font-medium text-blue-600 hover:bg-gray-100"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        View All Categories
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -262,7 +397,7 @@ function Header() {
         <div className="flex-1 flex items-center justify-end space-x-4">
           {renderAuthSection()}
           <Search className="cursor-pointer text-gray-600 hover:text-gray-900" />
-          <ShoppingCart className="cursor-pointer text-gray-600 hover:text-gray-900" />
+          {renderCartDropdown()}
           {isOpen ? (
             <X
               onClick={toggleMenu}
