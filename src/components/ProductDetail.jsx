@@ -500,25 +500,17 @@ function ProductDetail() {
                 {/* Quantity Selector */}
                 <div className="w-full md:w-1/2 md:pr-2 mb-4 md:mb-0">
                   <label className="block text-gray-700 mb-2">Quantity:</label>
-                  <div className="flex items-center border rounded-md">
+                  <div className="inline-flex items-center border rounded-md">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="px-4 py-2 border-r hover:bg-gray-100"
+                      className="px-4 py-2 hover:rounded-md border-r hover:bg-gray-100"
                     >
                       -
                     </button>
-                    <input
-                      type="number"
-                      value={quantity}
-                      onChange={(e) =>
-                        setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-                      }
-                      className="w-16 text-center px-2 py-2"
-                      min="1"
-                    />
+                    <p className="px-4">{quantity}</p>
                     <button
                       onClick={() => setQuantity(quantity + 1)}
-                      className="px-4 py-2 border-l hover:bg-gray-100"
+                      className="px-4 hover:rounded-md py-2 border-l hover:bg-gray-100"
                     >
                       +
                     </button>
