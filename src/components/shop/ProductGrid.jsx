@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Search } from "lucide-react"; // Bu satırı ekleyin
+import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { fetchProducts } from "../../store/actions/productActions";
 
@@ -9,7 +9,6 @@ const ProductCard = ({ product, viewMode, onClick }) => {
   const history = useHistory();
   const categories = useSelector((state) => state.categories.categories);
 
-  // Fix image handling
   const getProductImage = (product) => {
     if (!product)
       return "https://placehold.co/300x300/gray/white?text=No+Image";
@@ -31,24 +30,18 @@ const ProductCard = ({ product, viewMode, onClick }) => {
         return product.images[0];
       }
     }
-
     return (
       product.image || "https://placehold.co/300x300/gray/white?text=No+Image"
     );
   };
 
-  // Improved navigation function using React Router
   const handleProductClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Bu kategori ID'sini kullanarak categoryInfo'yu al
     if (product.category_id) {
-      // Redux'tan kategorileri al
       const category = categories.find((cat) => cat.id === product.category_id);
-
       if (category) {
-        // Kategori bilgilerini kullan
         const genderText = category.genderCode === "k" ? "kadin" : "erkek";
         const slug =
           category.slug ||
@@ -56,29 +49,19 @@ const ProductCard = ({ product, viewMode, onClick }) => {
             .toLowerCase()
             .replace(/\s+/g, "-")
             .replace(/[^a-z0-9-]/g, "");
-
-        // URL oluştur - product ile başlayan URL
-        const productUrl = `/product/${genderText}/${slug}/${product.id}`;
-        console.log("Navigating to:", productUrl);
-
-        history.push(productUrl);
+        history.push(`/product/${genderText}/${slug}/${product.id}`);
       } else {
-        // Kategori bulunamadıysa fallback çözüm
         const gender = product.gender === "k" ? "kadin" : "erkek";
         const defaultSlug =
           product.category?.toLowerCase().replace(/[^a-z0-9-]/g, "-") ||
           "kategori";
-
         history.push(`/product/${gender}/${defaultSlug}/${product.id}`);
       }
     } else {
-      // Son çare - sadece ID'ye göre URL
       history.push(`/product/kategori/urun/${product.id}`);
     }
 
-    if (onClick) {
-      onClick(product);
-    }
+    if (onClick) onClick(product);
   };
 
   return (
@@ -147,39 +130,17 @@ const ProductGrid = ({
   viewMode,
   totalPages,
   page,
-  handlePageChange: parentHandlePageChange, // Rename the prop
+  handlePageChange: parentHandlePageChange,
   resetFilters,
-  itemsPerPage,
-  categoryId,
   filterText,
-  sortOption,
   selectedGenderFilter,
 }) => {
   const dispatch = useDispatch();
-  const [currentPage, setPage] = useState(page);
 
-  // Update the handlePageChange function
   const handlePageChange = (newPage) => {
-    setPage(newPage);
-
-    // Preserve current filters and sort when changing pages
-    const params = {
-      limit: itemsPerPage,
-      offset: (newPage - 1) * itemsPerPage,
-      category_id: categoryId ? parseInt(categoryId) : undefined,
-      filter: filterText || undefined,
-      sort: sortOption !== "featured" ? sortOption : undefined,
-    };
-
-    dispatch(fetchProducts(params));
-
-    // Call parent handler if provided
     if (parentHandlePageChange) {
       parentHandlePageChange(newPage);
     }
-
-    // Scroll to top smoothly
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (isLoading) {
@@ -190,7 +151,6 @@ const ProductGrid = ({
     );
   }
 
-  // No products found display
   if (products.length === 0) {
     return (
       <div className="text-center py-16 bg-white rounded-lg shadow-sm">
@@ -233,22 +193,19 @@ const ProductGrid = ({
             key={product.id}
             product={product}
             viewMode={viewMode}
-            onClick={(product) => {
-              console.log("Clicked product:", product.id);
-            }}
+            onClick={(product) => console.log("Clicked product:", product.id)}
           />
         ))}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-8">
           <nav className="flex items-center space-x-1">
             <button
-              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
+              onClick={() => handlePageChange(Math.max(1, page - 1))}
+              disabled={page === 1}
               className={`px-3 py-2 rounded ${
-                currentPage === 1
+                page === 1
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
@@ -257,19 +214,18 @@ const ProductGrid = ({
             </button>
 
             {[...Array(totalPages)].map((_, i) => {
-              // Only show limited page numbers with ellipsis
               if (
                 totalPages <= 7 ||
                 i === 0 ||
                 i === totalPages - 1 ||
-                (currentPage - 3 <= i && i <= currentPage + 1)
+                (page - 3 <= i && i <= page + 1)
               ) {
                 return (
                   <button
                     key={i}
                     onClick={() => handlePageChange(i + 1)}
                     className={`w-10 h-10 flex items-center justify-center rounded-full ${
-                      currentPage === i + 1
+                      page === i + 1
                         ? "bg-blue-600 text-white"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
@@ -278,26 +234,23 @@ const ProductGrid = ({
                   </button>
                 );
               } else if (
-                (i === 1 && currentPage > 4) ||
-                (i === totalPages - 2 && currentPage < totalPages - 4)
+                (i === 1 && page > 4) ||
+                (i === totalPages - 2 && page < totalPages - 4)
               ) {
                 return (
                   <span key={i} className="px-2">
                     ...
                   </span>
                 );
-              } else {
-                return null;
               }
+              return null;
             })}
 
             <button
-              onClick={() =>
-                handlePageChange(Math.min(totalPages, currentPage + 1))
-              }
-              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
               className={`px-3 py-2 rounded ${
-                currentPage === totalPages
+                page === totalPages
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-gray-600 hover:bg-gray-100"
               }`}

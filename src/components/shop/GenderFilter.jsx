@@ -1,19 +1,14 @@
 import { Circle, Mars, Venus } from "lucide-react";
 
-const GenderFilter = ({ selectedGenderFilter, onGenderChange, title }) => {
-  console.log("GenderFilter render - current gender:", selectedGenderFilter);
-
+const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
   return (
     <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
       <h1 className="text-2xl font-bold text-gray-900 mb-4 md:mb-0">{title}</h1>
 
       <div className="flex gap-4">
-        {/* Tüm Ürünler (All) Butonu */}
+        {/* All Products Button */}
         <button
-          onClick={() => {
-            console.log("ALL butonu tıklandı");
-            onGenderChange("all");
-          }}
+          onClick={() => onGenderChange("all")}
           className={`flex items-center justify-center w-10 h-10 rounded-full transition-all relative group ${
             selectedGenderFilter === "all"
               ? "bg-emerald-100"
@@ -38,12 +33,9 @@ const GenderFilter = ({ selectedGenderFilter, onGenderChange, title }) => {
           </span>
         </button>
 
-        {/* Erkek Butonu */}
+        {/* Men Button */}
         <button
-          onClick={() => {
-            console.log("ERKEK butonu tıklandı");
-            onGenderChange("e");
-          }}
+          onClick={() => onGenderChange("e")}
           className={`flex items-center justify-center w-10 h-10 rounded-full transition-all relative group ${
             selectedGenderFilter === "e" ? "bg-blue-100" : "hover:bg-gray-100"
           }`}
@@ -61,12 +53,9 @@ const GenderFilter = ({ selectedGenderFilter, onGenderChange, title }) => {
           </span>
         </button>
 
-        {/* Kadın Butonu */}
+        {/* Women Button */}
         <button
-          onClick={() => {
-            console.log("KADIN butonu tıklandı");
-            onGenderChange("k");
-          }}
+          onClick={() => onGenderChange("k")}
           className={`flex items-center justify-center w-10 h-10 rounded-full transition-all relative group ${
             selectedGenderFilter === "k" ? "bg-pink-100" : "hover:bg-gray-100"
           }`}

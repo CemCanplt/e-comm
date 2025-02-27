@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Filter } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useHistory } from "react-router-dom";
@@ -12,9 +12,6 @@ import GenderFilter from "./shop/GenderFilter";
 import FilterBar from "./shop/FilterBar";
 import ProductToolbar from "./shop/ProductToolbar";
 import ProductGrid from "./shop/ProductGrid";
-
-// Services
-import GenderFilterService from "../services/GenderFilterService";
 
 function Shop() {
   const dispatch = useDispatch();
@@ -47,23 +44,27 @@ function Shop() {
     priceRange?.min || 0,
     priceRange?.max || 1000,
   ]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+
+  // Filtered products state - yeni implementasyon
+  const [displayedProducts, setDisplayedProducts] = useState([]);
 
   // Loading state
   const isProductsLoading = fetchState === "FETCHING";
 
-  // Load categories
+  // Kategorileri yükle
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  // Load initial products
+  // İlk ürünleri yükle ve URL parametrelerini işle
   useEffect(() => {
     const params = { limit: 12, offset: 0 };
 
     if (gender) {
       params.gender = gender === "kadin" ? "k" : "e";
       setSelectedGenderFilter(params.gender);
+    } else {
+      setSelectedGenderFilter("all");
     }
 
     if (categoryId) {
@@ -71,59 +72,104 @@ function Shop() {
       setSelectedCategory(parseInt(categoryId));
     }
 
+    console.log("İlk yükleme parametreleri:", params);
     dispatch(fetchProducts(params));
   }, [dispatch, gender, categoryId]);
 
-  // Apply local gender filtering
+  // Kategori haritası oluştur - hızlı erişim için
+  const categoryMap = useMemo(() => {
+    const map = {};
+    if (categories && categories.length > 0) {
+      categories.forEach((category) => {
+        map[category.id] = category;
+      });
+    }
+    return map;
+  }, [categories]);
+
+  // API'den gelen ürün listesini ayarla - Burada değişiklik yapıyoruz
   useEffect(() => {
-    if (productList?.length) {
-      const filtered = GenderFilterService.filterProductsByGender(
-        productList,
-        categories,
-        selectedGenderFilter === "all" ? null : selectedGenderFilter
-      );
-      setFilteredProducts(filtered);
+    if (productList && productList.length > 0) {
+      console.log("Ürün listesi güncellendi:", productList.length);
+
+      // Cinsiyet filtrelemesi uygula
+      if (
+        selectedGenderFilter !== "all" &&
+        categories &&
+        categories.length > 0
+      ) {
+        // Kategorilerden bir map oluştur
+        const categoryGenderMap = {};
+
+        categories.forEach((category) => {
+          categoryGenderMap[category.id] =
+            category.gender || category.genderCode;
+        });
+
+        // Ürünleri filtrele
+        const filtered = productList.filter((product) => {
+          // Ürünün kategorisinin cinsiyet bilgisine bak
+          if (product.category_id && categoryGenderMap[product.category_id]) {
+            return (
+              categoryGenderMap[product.category_id] === selectedGenderFilter
+            );
+          }
+          // Ürünün kendi cinsiyet bilgisi varsa onu kullan
+          if (product.gender) {
+            return product.gender === selectedGenderFilter;
+          }
+          return false;
+        });
+
+        console.log(
+          `Filtreden sonra ${filtered.length} ürün kaldı (cinsiyet: ${selectedGenderFilter})`
+        );
+        setDisplayedProducts(filtered);
+      } else {
+        // Filtre yoksa tüm ürünleri göster
+        setDisplayedProducts(productList);
+      }
     }
   }, [productList, categories, selectedGenderFilter]);
 
-  // Handle gender filter change
+  // Gender change handler - Bu fonksiyonu da güncelliyoruz
   const handleGenderChange = (gender) => {
-    if (
-      (gender === "all" && selectedGenderFilter === "all") ||
-      gender === selectedGenderFilter
-    ) {
-      return;
-    }
+    console.log("Cinsiyet filtreleme:", gender);
 
-    // Update local state
-    setSelectedGenderFilter(gender);
-    setPage(1);
-
-    // Update Redux state
+    // Redux state güncelle
     dispatch(setGenderFilter(gender === "all" ? null : gender));
 
-    // Update URL
+    // Yerel state güncelle
+    setSelectedGenderFilter(gender);
+
+    // Sayfa 1'e dön
+    setPage(1);
+
+    // Doğru URL'e git
     const newUrl =
       gender === "all"
         ? "/shop"
         : `/shop/${gender === "k" ? "kadin" : "erkek"}`;
+
     history.push(newUrl);
 
-    // Reset category if one is selected
-    if (selectedCategory !== "All") {
+    // Kategori seçimini sıfırla (cinsiyet değişirse)
+    if (categoryId) {
       setSelectedCategory("All");
     }
 
-    // Fetch products from server with gender filter
+    // Yeni veri getir
     const params = {
       limit: 12,
       offset: 0,
     };
 
+    // API çağrısında gender parametresi gönder
     if (gender !== "all") {
       params.gender = gender;
     }
 
+    console.log("API çağrısı yapılıyor:", params);
     dispatch(fetchProducts(params));
   };
 
@@ -161,22 +207,40 @@ function Shop() {
     if (priceValues[1] < (priceRange?.max || 1000))
       params.priceMax = priceValues[1];
 
+    console.log("Filtreler uygulanıyor:", params);
     dispatch(fetchProducts(params));
   };
 
-  // Handle page change
+  // Update the handlePageChange function
   const handlePageChange = (newPage) => {
+    // Update page state
     setPage(newPage);
+    
+    // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
-
+  
+    // Calculate the correct offset based on the page number
+    const offset = (newPage - 1) * 12;
+    
+    // Build parameters object with all current filters
     const params = {
       limit: 12,
-      offset: (newPage - 1) * 12,
+      offset: offset,
     };
-
+  
+    // Apply any active filters
     if (selectedGenderFilter !== "all") params.gender = selectedGenderFilter;
     if (selectedCategory !== "All") params.category_id = selectedCategory;
-
+    if (filterText) params.filter = filterText;
+    if (sortOption !== "featured") params.sort = sortOption;
+    if (priceValues[0] > (priceRange?.min || 0)) params.priceMin = priceValues[0];
+    if (priceValues[1] < (priceRange?.max || 1000)) params.priceMax = priceValues[1];
+  
+    // Log the pagination params to help with debugging
+    console.log(`Fetching page ${newPage} with offset:`, offset);
+    console.log("API parameters:", params);
+    
+    // Dispatch the action to fetch products with the updated parameters
     dispatch(fetchProducts(params));
   };
 
@@ -205,7 +269,6 @@ function Shop() {
       history.push(url);
     } else {
       setSelectedCategory(category.id);
-
       const genderCode = category.gender || category.genderCode || "e";
       const genderText = genderCode === "k" ? "kadin" : "erkek";
 
@@ -242,8 +305,6 @@ function Shop() {
     : "All Products";
 
   const totalPages = Math.ceil(total / 12);
-  const displayedProducts =
-    filteredProducts.length > 0 ? filteredProducts : productList || [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -261,8 +322,8 @@ function Shop() {
       <section className="mb-8">
         <GenderFilter
           selectedGenderFilter={selectedGenderFilter}
-          onGenderChange={handleGenderChange}
           title={pageTitle}
+          onGenderChange={handleGenderChange}
         />
       </section>
 
@@ -272,35 +333,38 @@ function Shop() {
           onClick={() => setShowFilters(!showFilters)}
           className="flex items-center justify-center w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors hover:bg-gray-50"
         >
-          <Filter className="w-5 h-5 mr-2" />
-          {showFilters ? "Filtreleri Gizle" : "Filtreleri Göster"}
+          <Filter className="mr-2 h-5 w-5" />
+          {showFilters ? "Hide Filters" : "Show Filters"}
         </button>
       </div>
 
       {/* Main content area */}
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Sidebar filters */}
-        <FilterBar
-          filterText={filterText}
-          setFilterText={setFilterText}
-          expandedFilterSections={expandedFilterSections}
-          toggleFilterSection={toggleFilterSection}
-          categories={categories}
-          selectedCategory={selectedCategory}
-          handleCategorySelect={handleCategorySelect}
-          priceValues={priceValues}
-          handlePriceRangeChange={handlePriceRangeChange}
-          priceRange={priceRange}
-          sortOption={sortOption}
-          setSortOption={setSortOption}
-          showFilters={showFilters}
-          resetFilters={resetFilters}
-          setShowFilters={setShowFilters}
-          applyFilters={applyFilters}
-        />
+      <div className="grid grid-cols-12 gap-6">
+        {/* Sidebar with filters */}
+        <aside className="col-span-12 md:col-span-3">
+          <FilterBar
+            filterText={filterText}
+            setFilterText={setFilterText}
+            expandedFilterSections={expandedFilterSections}
+            toggleFilterSection={toggleFilterSection}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            navigateToCategory={handleCategorySelect}
+            priceValues={priceValues}
+            handlePriceRangeChange={handlePriceRangeChange}
+            priceRange={priceRange}
+            dispatch={dispatch}
+            sortOption={sortOption}
+            showFilters={showFilters}
+            resetFilters={resetFilters}
+            setShowFilters={setShowFilters}
+            fetchFilteredProducts={applyFilters}
+          />
+        </aside>
 
-        {/* Main content */}
-        <main className="flex-1">
+        {/* Product grid */}
+        <main className="col-span-12 md:col-span-9">
           <ProductToolbar
             displayedProducts={displayedProducts}
             total={total}
@@ -308,7 +372,7 @@ function Shop() {
             setSortOption={setSortOption}
             viewMode={viewMode}
             setViewMode={setViewMode}
-            applyFilters={applyFilters}
+            fetchFilteredProducts={applyFilters}
           />
 
           <ProductGrid

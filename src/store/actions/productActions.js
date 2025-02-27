@@ -4,105 +4,111 @@ import { PRODUCT_ACTIONS } from "../reducers/productReducer";
 // API base URL
 const API_URL = "https://workintech-fe-ecommerce.onrender.com";
 
-// Action creators for product fetching
-export const fetchProductsStart = () => ({
+// Set fetch state
+export const setFetchState = (fetchState) => ({
   type: PRODUCT_ACTIONS.SET_FETCH_STATE,
-  payload: "FETCHING",
+  payload: fetchState,
 });
 
-export const fetchProductsSuccess = (products) => ({
+// Set product list
+export const setProductList = (products) => ({
   type: PRODUCT_ACTIONS.SET_PRODUCT_LIST,
   payload: products,
 });
 
-export const fetchProductsFailure = (error) => ({
-  type: PRODUCT_ACTIONS.SET_FETCH_STATE,
-  payload: "FAILED",
-});
-
-export const setTotalProducts = (total) => ({
+// Set total product count
+export const setTotal = (total) => ({
   type: PRODUCT_ACTIONS.SET_TOTAL,
   payload: total,
 });
 
-// fetchProducts fonksiyonunu basitleştir
+// Update fetchProducts to handle pagination better
 export const fetchProducts = (params = {}) => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     try {
-      // Loading başlat
-      dispatch(fetchProductsStart());
+      // Set loading state
+      dispatch(setFetchState("FETCHING"));
 
-      // API parametrelerini oluştur
+      // Prepare query parameters
       const queryParams = new URLSearchParams();
 
-      // Gender parametresi kontrolü ve ekleme
+      // Önemli: gender parametresi varsa bunu kaydet
+      const genderFilter = params.gender || null;
+
+      // Add gender parameter if provided
       if (params.gender) {
         console.log(`Gender API parametresi: ${params.gender}`);
         queryParams.append("gender", params.gender);
       }
 
-      // Diğer parametreler...
-      queryParams.append("limit", params.limit || "12");
-      if (params.offset !== undefined) {
-        queryParams.append("offset", params.offset);
+      // Ensure pagination parameters are present and have default values
+      const limit = params.limit || 12;
+      const offset = params.offset !== undefined ? params.offset : 0;
+
+      queryParams.append("limit", limit.toString());
+      queryParams.append("offset", offset.toString());
+
+      // Add other parameters
+      if (params.category_id) {
+        queryParams.append("category_id", params.category_id);
+      }
+      if (params.filter) {
+        queryParams.append("filter", params.filter);
+      }
+      if (params.sort) {
+        queryParams.append("sort", params.sort);
+      }
+      if (params.priceMin !== undefined) {
+        queryParams.append("price_min", params.priceMin);
+      }
+      if (params.priceMax !== undefined) {
+        queryParams.append("price_max", params.priceMax);
       }
 
-      if (params.category_id)
-        queryParams.append("category_id", params.category_id);
-      if (params.filter) queryParams.append("filter", params.filter);
-      if (params.sort) queryParams.append("sort", params.sort);
-      if (params.priceMin !== undefined)
-        queryParams.append("price_min", params.priceMin);
-      if (params.priceMax !== undefined)
-        queryParams.append("price_max", params.priceMax);
-
-      // API çağrısı
       const url = `${API_URL}/products${
         queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`;
-      console.log("API çağrısı URL:", url);
+      console.log(`Fetching products: Page ${offset / limit + 1}, URL:`, url);
 
-      const response = await axios.get(url);
+      // Fetch products
+      const productResponse = await axios.get(url);
 
-      // Dönen ürün verisinin tam yapısını incele
-      if (response.data.products && response.data.products.length > 0) {
+      // Log the number of products received and check if the response makes sense
+      console.log(
+        `Received ${productResponse.data.products.length} products, total: ${productResponse.data.total}`
+      );
+
+      if (productResponse.data.products.length > 0) {
+        console.log("First product ID:", productResponse.data.products[0].id);
         console.log(
-          "API'den dönen ilk ürün verisi:",
-          response.data.products[0]
+          "Last product ID:",
+          productResponse.data.products[
+            productResponse.data.products.length - 1
+          ].id
         );
-
-        // Gender bilgisini farklı alanlardan çıkarmaya çalış
-        const productSample = response.data.products[0];
-        console.log("Olası gender alanları:", {
-          gender: productSample.gender,
-          categoryGender: productSample.category?.gender,
-          categoryTitle: productSample.category?.title,
-          title: productSample.title,
-          name: productSample.name,
-          description: productSample.description,
-        });
       }
 
-      // API'den dönen ürünlerin gender değerlerini kontrol et
-      if (response.data.products && response.data.products.length > 0) {
-        const genderSamples = {};
-        response.data.products.forEach((product) => {
-          if (product.gender) {
-            genderSamples[product.gender] =
-              (genderSamples[product.gender] || 0) + 1;
-          }
+      // Ürünleri Redux store'a kaydet, gender filtresini de aktar
+      if (genderFilter) {
+        // Eğer bir cinsiyet filtresi varsa, özel SET_PRODUCT_LIST_WITH_GENDER action'ını kullan
+        dispatch({
+          type: PRODUCT_ACTIONS.SET_PRODUCT_LIST_WITH_GENDER,
+          payload: {
+            products: productResponse.data.products,
+            gender: genderFilter,
+          },
         });
-        console.log("API ürünlerindeki gender değerleri:", genderSamples);
+      } else {
+        // Normal ürün listesi güncelleme işlemi
+        dispatch(setProductList(productResponse.data.products));
       }
 
-      // Ürünleri state'e kaydet
-      dispatch(fetchProductsSuccess(response.data.products));
-      dispatch(setTotalProducts(response.data.total));
+      dispatch(setTotal(productResponse.data.total));
 
-      return response.data;
+      return productResponse.data;
     } catch (error) {
-      console.error("API hatası:", error);
-      dispatch(fetchProductsFailure(error));
+      console.error("Ürünleri getirirken hata oluştu:", error);
+      dispatch(setFetchState("FAILED"));
       throw error;
     }
   };

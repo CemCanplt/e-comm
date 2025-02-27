@@ -4,81 +4,78 @@ import { Link } from "react-router-dom";
 function Footer() {
   return (
     <footer className="bg-gray-50 text-gray-700">
-      <div className="container mx-auto px-9 py-5 lg:gap-5 lg:px-25">
-        <div className="text-left mb-6 bg-(--Light-Gray) py-12 lg:flex lg:flex-row lg:justify-between lg:items-center">
+      <div className="container mx-auto px-9 py-5 lg:px-25">
+        {/* Header */}
+        <div className="mb-6 py-12 text-left lg:flex lg:items-center lg:justify-between">
           <h3 className="text-2xl font-bold text-gray-900">Bandage</h3>
-          <div className="flex space-x-4 mt-2">
-            <Facebook className="text-(--ilk-renk) cursor-pointer" />
-            <Instagram className="text-(--ilk-renk) cursor-pointer" />
-            <Twitter className="text-(--ilk-renk) cursor-pointer" />
+          <div className="mt-2 flex space-x-4">
+            <Facebook className="cursor-pointer" />
+            <Instagram className="cursor-pointer" />
+            <Twitter className="cursor-pointer" />
           </div>
         </div>
 
-        <div className="flex flex-col lg:gap-5 lg:flex-row lg:justify-between space-y-12 text-left">
-          <div className="space-y-2">
-            <h3 className="font-bold">Company Info</h3>
-            <ul className="text-sm space-y-2 font-bold text-(--ikinci-metin-rengi)">
-              <li>
-                <Link to="/aboutUs">About Us</Link>
-              </li>
-              <li>Carrier</li>
-              <li>We are hiring</li>
-              <li>Blog</li>
-            </ul>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-bold">Legal</h3>
-            <ul className="text-sm space-y-2 font-bold text-(--ikinci-metin-rengi)">
-              <li>
-                <Link to="/aboutUs">About Us</Link>
-              </li>
-              <li>Carrier</li>
-              <li>We are hiring</li>
-              <li>Blog</li>
-            </ul>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-bold">Features</h3>
-            <ul className="text-sm space-y-2 font-bold text-(--ikinci-metin-rengi)">
-              <li>Business Marketing</li>
-              <li>User Analytic</li>
-              <li>Live Chat</li>
-              <li>Unlimited Support</li>
-            </ul>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-bold">Resources</h3>
-            <ul className="text-sm space-y-2 font-bold text-(--ikinci-metin-rengi)">
-              <li>IOS & Android</li>
-              <li>Watch a Demo</li>
-              <li>Customers</li>
-              <li>API</li>
-            </ul>
-          </div>
+        {/* Main Content */}
+        <div className="flex flex-col space-y-12 text-left lg:flex-row lg:justify-between lg:gap-5">
+          {/* Company Info */}
+          <FooterSection title="Company Info" links={["About Us", "Carrier", "We are hiring", "Blog"]} />
+          
+          {/* Legal */}
+          <FooterSection title="Legal" links={["About Us", "Carrier", "We are hiring", "Blog"]} />
+          
+          {/* Features */}
+          <FooterSection 
+            title="Features" 
+            links={["Business Marketing", "User Analytic", "Live Chat", "Unlimited Support"]} 
+          />
+          
+          {/* Resources */}
+          <FooterSection 
+            title="Resources" 
+            links={["IOS & Android", "Watch a Demo", "Customers", "API"]} 
+          />
+          
+          {/* Newsletter */}
           <div className="space-y-2">
             <h3 className="font-bold">Get In Touch</h3>
             <div className="flex items-center">
               <input
                 type="email"
                 placeholder="Your Email"
-                className="border rounded-l-lg p-5 w-full bg-(--Light-Gray) border-gray-700/40"
+                className="w-full rounded-l-lg border border-gray-700/40 p-5"
               />
-
-              <button className="bg-(--ilk-renk) text-white px-4 py-5 rounded-r-lg">
+              <button className="rounded-r-lg bg-blue-600 px-4 py-5 text-white">
                 Subscribe
               </button>
             </div>
-            <p className="text-xs mt-2">Lore imp sum dolor Amit</p>
+            <p className="mt-2 text-xs">Lore imp sum dolor Amit</p>
           </div>
         </div>
 
-        <div className="text-center font-bold py-8 text-gray-500 mt-8 bg-(--Light-Gray)">
+        {/* Footer */}
+        <div className="mt-8 py-8 text-center font-bold text-gray-500">
           Made With Love By
           <br />
           Finland All Right Reserved
         </div>
       </div>
     </footer>
+  );
+}
+
+// Helper component for footer sections
+function FooterSection({ title, links }) {
+  return (
+    <div className="space-y-2">
+      <h3 className="font-bold">{title}</h3>
+      <ul className="space-y-2 text-sm font-bold text-gray-600">
+        {links.map((link, index) => (
+          <li key={index}>
+            {link === "About Us" ? <Link to="/aboutUs">{link}</Link> : link}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
