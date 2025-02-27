@@ -1,52 +1,43 @@
 const initialState = {
-  categories: [],
   productList: [],
-  filteredProducts: null,
   total: 0,
-  limit: 25,
-  offset: 0,
-  filter: "",
-  sortBy: "featured",
-  priceRange: { min: 0, max: 1000, current: [0, 1000] },
-  fetchState: "NOT_FETCHED", // "NOT_FETCHED", "FETCHING", "FETCHED", "FAILED"
+  fetchState: "IDLE", // IDLE, FETCHING, FETCHED, FAILED
+  priceRange: {
+    min: 0,
+    max: 1000,
+    current: [0, 1000],
+  },
   singleProduct: null,
   singleProductLoading: false,
   singleProductError: null,
   relatedProducts: [],
   genderFilter: null,
-  genderMappingChecked: false,
-  categoriesMap: {},
+  categoryFilter: null,
+  filter: "",
+  sortBy: "featured",
+  limit: 12,
+  offset: 0,
 };
 
-// Action Types
 export const PRODUCT_ACTIONS = {
-  SET_CATEGORIES: "SET_CATEGORIES",
   SET_PRODUCT_LIST: "SET_PRODUCT_LIST",
   SET_TOTAL: "SET_TOTAL",
   SET_FETCH_STATE: "SET_FETCH_STATE",
-  SET_LIMIT: "SET_LIMIT",
-  SET_OFFSET: "SET_OFFSET",
-  SET_FILTER: "SET_FILTER",
-  SET_SORT_BY: "SET_SORT_BY",
   SET_PRICE_RANGE: "SET_PRICE_RANGE",
-  FILTER_PRODUCTS: "FILTER_PRODUCTS",
   SET_SINGLE_PRODUCT: "SET_SINGLE_PRODUCT",
   SET_SINGLE_PRODUCT_LOADING: "SET_SINGLE_PRODUCT_LOADING",
   SET_SINGLE_PRODUCT_ERROR: "SET_SINGLE_PRODUCT_ERROR",
   SET_RELATED_PRODUCTS: "SET_RELATED_PRODUCTS",
-  SET_PRODUCTS: "SET_PRODUCTS",
-  SET_TOTAL_COUNT: "SET_TOTAL_COUNT",
-  SET_PRODUCTS_LOADING: "SET_PRODUCTS_LOADING",
   SET_GENDER_FILTER: "SET_GENDER_FILTER",
-  SET_PRODUCT_LIST_WITH_GENDER: "SET_PRODUCT_LIST_WITH_GENDER",
-  SET_CATEGORIES_MAP: "SET_CATEGORIES_MAP",
+  SET_CATEGORY_FILTER: "SET_CATEGORY_FILTER",
+  SET_FILTER: "SET_FILTER",
+  SET_SORT_BY: "SET_SORT_BY",
+  SET_LIMIT: "SET_LIMIT",
+  SET_OFFSET: "SET_OFFSET",
+  FILTER_PRODUCTS: "FILTER_PRODUCTS",
+  SET_CATEGORIES: "SET_CATEGORIES",
 };
 
-// Action Creators
-export const setCategories = (categories) => ({
-  type: PRODUCT_ACTIONS.SET_CATEGORIES,
-  payload: categories,
-});
 export const setProductList = (productList) => ({
   type: PRODUCT_ACTIONS.SET_PRODUCT_LIST,
   payload: productList,
@@ -83,6 +74,14 @@ export const filterProducts = () => ({ type: PRODUCT_ACTIONS.FILTER_PRODUCTS });
 export const setGenderFilter = (gender) => ({
   type: PRODUCT_ACTIONS.SET_GENDER_FILTER,
   payload: gender,
+});
+export const setCategoryFilter = (category) => ({
+  type: PRODUCT_ACTIONS.SET_CATEGORY_FILTER,
+  payload: category,
+});
+export const setCategories = (categories) => ({
+  type: PRODUCT_ACTIONS.SET_CATEGORIES,
+  payload: categories,
 });
 
 // Sorting helper function
@@ -128,97 +127,24 @@ const sortProducts = (products, sortType) => {
 };
 
 // Reducer
-const productReducer = (state = initialState, action) => {
+export default function productReducer(state = initialState, action) {
   switch (action.type) {
-    case PRODUCT_ACTIONS.SET_CATEGORIES:
-      return { ...state, categories: action.payload };
-
     case PRODUCT_ACTIONS.SET_PRODUCT_LIST:
       return {
         ...state,
         productList: action.payload,
-        filteredProducts: action.payload,
-        genderMappingChecked: true,
-        fetchState: "FETCHED",
       };
 
     case PRODUCT_ACTIONS.SET_TOTAL:
-      return { ...state, total: action.payload };
+      return {
+        ...state,
+        total: action.payload,
+      };
 
     case PRODUCT_ACTIONS.SET_FETCH_STATE:
-      return { ...state, fetchState: action.payload };
-
-    case PRODUCT_ACTIONS.SET_LIMIT:
-      return { ...state, limit: action.payload };
-
-    case PRODUCT_ACTIONS.SET_OFFSET:
-      return { ...state, offset: action.payload };
-
-    case PRODUCT_ACTIONS.SET_FILTER:
-      return { ...state, filter: action.payload };
-
-    case PRODUCT_ACTIONS.SET_SORT_BY:
       return {
         ...state,
-        sortBy: action.payload,
-        filteredProducts: sortProducts(
-          state.filteredProducts || state.productList,
-          action.payload
-        ),
-        productList: sortProducts(state.productList, action.payload),
-      };
-
-    case PRODUCT_ACTIONS.SET_PRICE_RANGE:
-      return {
-        ...state,
-        priceRange: { ...state.priceRange, current: action.payload },
-      };
-
-    case PRODUCT_ACTIONS.FILTER_PRODUCTS:
-      const filteredList = state.productList.filter(
-        (product) =>
-          product.price >= state.priceRange.current[0] &&
-          product.price <= state.priceRange.current[1]
-      );
-      return { ...state, filteredProducts: filteredList };
-
-    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT:
-      return { ...state, singleProduct: action.payload };
-
-    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT_LOADING:
-      return { ...state, singleProductLoading: action.payload };
-
-    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT_ERROR:
-      return { ...state, singleProductError: action.payload };
-
-    case PRODUCT_ACTIONS.SET_RELATED_PRODUCTS:
-      return { ...state, relatedProducts: action.payload };
-
-    case PRODUCT_ACTIONS.SET_PRODUCTS:
-      return {
-        ...state,
-        productList: action.payload,
-        filteredProducts: action.payload,
-        fetchState: "FETCHED",
-      };
-
-    case PRODUCT_ACTIONS.SET_TOTAL_COUNT:
-      return { ...state, total: action.payload };
-
-    case PRODUCT_ACTIONS.SET_PRODUCTS_LOADING:
-      return {
-        ...state,
-        fetchState: action.payload ? "FETCHING" : state.fetchState,
-      };
-
-    case PRODUCT_ACTIONS.SET_PRODUCT_LIST_WITH_GENDER:
-      const { products, gender } = action.payload;
-      return {
-        ...state,
-        productList: products,
-        filteredProducts: products, // API'den gelen filtreli sonuçlar
-        genderFilter: gender, // Cinsiyet filtresini sakla
-        fetchState: "FETCHED",
+        fetchState: action.payload,
       };
 
     case PRODUCT_ACTIONS.SET_GENDER_FILTER:
@@ -227,18 +153,76 @@ const productReducer = (state = initialState, action) => {
         genderFilter: action.payload,
       };
 
-    case PRODUCT_ACTIONS.SET_CATEGORIES_MAP:
+    case PRODUCT_ACTIONS.SET_CATEGORY_FILTER:
       return {
         ...state,
-        categoriesMap: action.payload.reduce((map, category) => {
-          map[category.id] = category;
-          return map;
-        }, {}),
+        categoryFilter: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_LIMIT:
+      return {
+        ...state,
+        limit: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_OFFSET:
+      return {
+        ...state,
+        offset: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_FILTER:
+      return {
+        ...state,
+        filter: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_SORT_BY:
+      return {
+        ...state,
+        sortBy: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_PRICE_RANGE:
+      return {
+        ...state,
+        priceRange: {
+          ...state.priceRange,
+          current: action.payload,
+        },
+      };
+
+    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT:
+      return {
+        ...state,
+        singleProduct: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT_LOADING:
+      return {
+        ...state,
+        singleProductLoading: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_SINGLE_PRODUCT_ERROR:
+      return {
+        ...state,
+        singleProductError: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_RELATED_PRODUCTS:
+      return {
+        ...state,
+        relatedProducts: action.payload,
+      };
+
+    case PRODUCT_ACTIONS.SET_CATEGORIES:
+      return {
+        ...state,
+        categories: action.payload,
       };
 
     default:
       return state;
   }
-};
-
-export default productReducer;
+}

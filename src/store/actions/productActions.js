@@ -4,90 +4,54 @@ import { PRODUCT_ACTIONS } from "../reducers/productReducer";
 // API base URL
 const API_URL = "https://workintech-fe-ecommerce.onrender.com";
 
-// Set fetch state
+// Set fetch state action creator
 export const setFetchState = (fetchState) => ({
   type: PRODUCT_ACTIONS.SET_FETCH_STATE,
   payload: fetchState,
 });
 
-// Set product list
+// Set product list action creator
 export const setProductList = (products) => ({
   type: PRODUCT_ACTIONS.SET_PRODUCT_LIST,
   payload: products,
 });
 
-// Set total product count
+// Set total product count action creator
 export const setTotal = (total) => ({
   type: PRODUCT_ACTIONS.SET_TOTAL,
   payload: total,
 });
 
-// Ürünleri getiren fonksiyon - cinsiyet filtresi için iyileştirildi
+// Fetch products thunk action - handles all filter parameters
 export const fetchProducts = (params = {}) => {
-  return (dispatch, getState) => {
-    // Yükleme durumunu ayarla
+  return (dispatch) => {
     dispatch(setFetchState("FETCHING"));
 
-    // Cinsiyet parametresini kontrol edip debug mesajı yaz
-    if (params.gender) {
-      console.log(`Cinsiyet filtresi API'ye gönderiliyor: ${params.gender}`);
-    }
-
-    // API parametrelerini hazırla
     const queryParams = new URLSearchParams();
 
-    // Tüm filtreleri API'ye ekle
-    if (params.gender) queryParams.append("gender", params.gender);
-
-    // Sayfalama parametrelerini ekle
+    // Add all filter parameters
     const limit = params.limit || 12;
     const offset = params.offset !== undefined ? params.offset : 0;
-
     queryParams.append("limit", limit.toString());
     queryParams.append("offset", offset.toString());
 
-    // Kategori filtresi ekle
     if (params.category_id)
       queryParams.append("category_id", params.category_id);
-
-    // Metin arama filtresi ekle
+    if (params.gender) queryParams.append("gender", params.gender);
     if (params.filter) queryParams.append("filter", params.filter);
-
-    // Sıralama ekle
     if (params.sort) queryParams.append("sort", params.sort);
+    if (params.priceMin) queryParams.append("price_min", params.priceMin);
+    if (params.priceMax) queryParams.append("price_max", params.priceMax);
 
-    // Fiyat filtrelerini ekle
-    if (params.priceMin !== undefined)
-      queryParams.append("price_min", params.priceMin);
-    if (params.priceMax !== undefined)
-      queryParams.append("price_max", params.priceMax);
-
-    const url = `${API_URL}/products${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
-    console.log("API çağrısı URL:", url);
-
-    // API'den filtrelenmiş verileri getir
     return axios
-      .get(url)
-      .then((productResponse) => {
-        console.log(
-          `API yanıtı: ${productResponse.data.products.length} ürün, toplam: ${productResponse.data.total}`
-        );
-
-        // Redux store'a kaydet
-        dispatch(setProductList(productResponse.data.products));
-
-        // Toplam sayıyı güncelle - filtreleme sonucundaki toplam değeri kullan
-        dispatch(setTotal(productResponse.data.total));
-
-        // Yükleme durumunu güncelle
+      .get(`${API_URL}/products?${queryParams.toString()}`)
+      .then((response) => {
+        dispatch(setProductList(response.data.products));
+        dispatch(setTotal(response.data.total));
         dispatch(setFetchState("FETCHED"));
-
-        return productResponse.data;
+        return response.data;
       })
       .catch((error) => {
-        console.error("Ürünleri getirirken hata oluştu:", error);
         dispatch(setFetchState("FAILED"));
         throw error;
       });
@@ -183,3 +147,9 @@ export const fetchRelatedProducts = (categoryId, currentProductId) => {
       });
   };
 };
+
+// Additional actions for setting gender filter
+export const setGenderFilter = (gender) => ({
+  type: PRODUCT_ACTIONS.SET_GENDER_FILTER,
+  payload: gender,
+});

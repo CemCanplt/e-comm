@@ -1,74 +1,63 @@
 import React from "react";
-import { Grid, List } from "lucide-react"; // Removed Search import
+import { Grid, List, ArrowUpDown } from "lucide-react";
 
 const ProductToolbar = ({
-  displayedProducts,
   total,
   sortOption,
   setSortOption,
   viewMode,
   setViewMode,
-  fetchFilteredProducts,
 }) => {
   const handleSortChange = (e) => {
-    const newSortOption = e.target.value;
-    setSortOption(newSortOption);
-
-    // Immediately apply the sorting and update URL
-    fetchFilteredProducts({
-      sort: newSortOption,
-    });
+    setSortOption(e.target.value);
   };
 
   return (
-    <div className="flex flex-col mb-6 bg-white p-4 rounded-lg shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        {/* Left - Product count */}
-        <div className="text-sm text-gray-600">
-          Showing {displayedProducts.length} of {total} products
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-white rounded-lg shadow-sm mb-6">
+      <div className="mb-4 md:mb-0">
+        <p className="text-gray-600">
+          <span className="font-medium text-gray-900">{total}</span> products
+          found
+        </p>
+      </div>
+
+      <div className="flex flex-col md:flex-row w-full md:w-auto gap-3">
+        <div className="relative">
+          <div className="flex items-center p-2 border rounded-md bg-white">
+            <ArrowUpDown className="w-5 h-5 text-gray-400 mr-2" />
+            <select
+              value={sortOption}
+              onChange={handleSortChange}
+              className="appearance-none bg-transparent pr-8 py-1 focus:outline-none text-gray-700"
+            >
+              <option value="featured">Featured</option>
+              <option value="price:asc">Price: Low to High</option>
+              <option value="price:desc">Price: High to Low</option>
+              <option value="rating:desc">Highest Rated</option>
+              <option value="rating:asc">Lowest Rated</option>
+            </select>
+          </div>
         </div>
 
-        {/* Right - Sort Controls and View Toggles */}
-        <div className="flex flex-wrap gap-4">
-          {/* Sort dropdown */}
-          <select
-            value={sortOption}
-            onChange={handleSortChange}
-            className="bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        <div className="flex border rounded-md">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`p-2 rounded-l-md ${
+              viewMode === "grid" ? "bg-gray-100" : "bg-white hover:bg-gray-50"
+            }`}
+            aria-label="Grid view"
           >
-            <option value="featured">Featured</option>
-            <option value="price:asc">Price: Low to High</option>
-            <option value="price:desc">Price: High to Low</option>
-            <option value="rating:desc">Rating: High to Low</option>
-            <option value="rating:asc">Rating: Low to High</option>
-            <option value="newest">Newest First</option>
-            <option value="name:asc">Name: A to Z</option>
-            <option value="name:desc">Name: Z to A</option>
-          </select>
-
-          {/* View Mode Toggles */}
-          <div className="border rounded-md flex">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 ${
-                viewMode === "grid"
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <Grid className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 ${
-                viewMode === "list"
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <List className="h-5 w-5" />
-            </button>
-          </div>
+            <Grid className="w-5 h-5 text-gray-700" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 rounded-r-md ${
+              viewMode === "list" ? "bg-gray-100" : "bg-white hover:bg-gray-50"
+            }`}
+            aria-label="List view"
+          >
+            <List className="w-5 h-5 text-gray-700" />
+          </button>
         </div>
       </div>
     </div>

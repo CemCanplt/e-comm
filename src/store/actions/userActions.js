@@ -120,7 +120,10 @@ export const fetchCategories = () => {
     return axios
       .get("https://workintech-fe-ecommerce.onrender.com/categories")
       .then((response) => {
-        dispatch(setCategories(response.data));
+        dispatch({
+          type: "FETCH_CATEGORIES_SUCCESS",
+          payload: response.data,
+        });
       })
       .catch((error) => {
         console.error("Failed to fetch categories:", error);
