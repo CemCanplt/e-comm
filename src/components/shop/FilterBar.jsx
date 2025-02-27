@@ -93,12 +93,18 @@ const FilterBar = ({
       handlePriceRangeChange(e);
     }
 
+    // Zamanlayıcı ile debounce yaparak API çağrısını geciktir
     if (priceTimeoutRef.current) {
       clearTimeout(priceTimeoutRef.current);
     }
 
     priceTimeoutRef.current = setTimeout(() => {
-      fetchFilteredProducts({ priceMin: newMin, priceMax: newMax });
+      // API'yi çağır - fiyat filtresini sunucu tarafında uygula
+      fetchFilteredProducts({
+        priceMin: newMin,
+        priceMax: newMax,
+        offset: 0, // Önemli: Sayfa 1'e dön
+      });
     }, 500);
   };
 

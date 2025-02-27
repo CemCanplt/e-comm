@@ -174,14 +174,15 @@ function SignUp() {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                     message: "Invalid email address",
                   },
-                  async validate(value) {
-                    const response = await fetch(
-                      `${baseURL}/check-email?email=${value}`,
-                      { cache: "no-store" }
-                    );
-                    const data = await response.json();
-                    return data.available || "This email is already registered";
-                  },
+                  validate: (value) => {
+                    return fetch(`${baseURL}/check-email?email=${value}`, { cache: "no-store" })
+                      .then(response => response.json())
+                      .then(data => data.available || "This email is already registered")
+                      .catch(error => {
+                        console.error("Email check error:", error);
+                        return true; // Consider valid in case of error
+                      });
+                  }
                 })}
                 className={`appearance-none rounded relative block w-full px-3 py-2 border ${
                   errors.email ? "border-red-500" : "border-gray-300"
@@ -255,7 +256,7 @@ function SignUp() {
               </label>
               <select
                 id="role_id"
-                {...register("role_id")} // roleId -> role_id
+                {...register("role_id")}
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               >
                 {roles.map((role) => (
@@ -374,7 +375,7 @@ function SignUp() {
           <div>
             <button
               type="submit"
-              disabled={isSubmitting || !isValid || !isDirty} // Burada koşulları ekledik
+              disabled={isSubmitting || !isValid || !isDirty}
               className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
                 ${
                   isSubmitting || !isValid || !isDirty

@@ -22,88 +22,67 @@ export const setTotal = (total) => ({
   payload: total,
 });
 
-// Fetch products - converted to promise chains
+// Ürünleri getiren fonksiyon - cinsiyet filtresi için iyileştirildi
 export const fetchProducts = (params = {}) => {
   return (dispatch, getState) => {
-    // Set loading state
+    // Yükleme durumunu ayarla
     dispatch(setFetchState("FETCHING"));
 
-    // Prepare query parameters
-    const queryParams = new URLSearchParams();
-
-    // Önemli: gender parametresi varsa bunu kaydet
-    const genderFilter = params.gender || null;
-
-    // Add gender parameter if provided
+    // Cinsiyet parametresini kontrol edip debug mesajı yaz
     if (params.gender) {
-      console.log(`Gender API parametresi: ${params.gender}`);
-      queryParams.append("gender", params.gender);
+      console.log(`Cinsiyet filtresi API'ye gönderiliyor: ${params.gender}`);
     }
 
-    // Ensure pagination parameters are present and have default values
+    // API parametrelerini hazırla
+    const queryParams = new URLSearchParams();
+
+    // Tüm filtreleri API'ye ekle
+    if (params.gender) queryParams.append("gender", params.gender);
+
+    // Sayfalama parametrelerini ekle
     const limit = params.limit || 12;
     const offset = params.offset !== undefined ? params.offset : 0;
 
     queryParams.append("limit", limit.toString());
     queryParams.append("offset", offset.toString());
 
-    // Add other parameters
-    if (params.category_id) {
+    // Kategori filtresi ekle
+    if (params.category_id)
       queryParams.append("category_id", params.category_id);
-    }
-    if (params.filter) {
-      queryParams.append("filter", params.filter);
-    }
-    if (params.sort) {
-      queryParams.append("sort", params.sort);
-    }
-    if (params.priceMin !== undefined) {
+
+    // Metin arama filtresi ekle
+    if (params.filter) queryParams.append("filter", params.filter);
+
+    // Sıralama ekle
+    if (params.sort) queryParams.append("sort", params.sort);
+
+    // Fiyat filtrelerini ekle
+    if (params.priceMin !== undefined)
       queryParams.append("price_min", params.priceMin);
-    }
-    if (params.priceMax !== undefined) {
+    if (params.priceMax !== undefined)
       queryParams.append("price_max", params.priceMax);
-    }
 
     const url = `${API_URL}/products${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
-    console.log(`Fetching products: Page ${offset / limit + 1}, URL:`, url);
+    console.log("API çağrısı URL:", url);
 
-    // Fetch products
+    // API'den filtrelenmiş verileri getir
     return axios
       .get(url)
       .then((productResponse) => {
-        // Log the number of products received and check if the response makes sense
         console.log(
-          `Received ${productResponse.data.products.length} products, total: ${productResponse.data.total}`
+          `API yanıtı: ${productResponse.data.products.length} ürün, toplam: ${productResponse.data.total}`
         );
 
-        if (productResponse.data.products.length > 0) {
-          console.log("First product ID:", productResponse.data.products[0].id);
-          console.log(
-            "Last product ID:",
-            productResponse.data.products[
-              productResponse.data.products.length - 1
-            ].id
-          );
-        }
+        // Redux store'a kaydet
+        dispatch(setProductList(productResponse.data.products));
 
-        // Ürünleri Redux store'a kaydet, gender filtresini de aktar
-        if (genderFilter) {
-          // Eğer bir cinsiyet filtresi varsa, özel SET_PRODUCT_LIST_WITH_GENDER action'ını kullan
-          dispatch({
-            type: PRODUCT_ACTIONS.SET_PRODUCT_LIST_WITH_GENDER,
-            payload: {
-              products: productResponse.data.products,
-              gender: genderFilter,
-            },
-          });
-        } else {
-          // Normal ürün listesi güncelleme işlemi
-          dispatch(setProductList(productResponse.data.products));
-        }
-
+        // Toplam sayıyı güncelle - filtreleme sonucundaki toplam değeri kullan
         dispatch(setTotal(productResponse.data.total));
+
+        // Yükleme durumunu güncelle
+        dispatch(setFetchState("FETCHED"));
 
         return productResponse.data;
       })

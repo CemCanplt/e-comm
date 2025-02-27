@@ -1,6 +1,14 @@
 import { Circle, Mars, Venus } from "lucide-react";
 
 const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
+  console.log("GenderFilter render - seçili filtre:", selectedGenderFilter);
+
+  // Tıklama işleyicisi
+  const handleGenderClick = (gender) => {
+    console.log("Gender button clicked:", gender);
+    onGenderChange(gender);
+  };
+
   return (
     <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
       <h1 className="text-2xl font-bold text-gray-900 mb-4 md:mb-0">{title}</h1>
@@ -8,13 +16,14 @@ const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
       <div className="flex gap-4">
         {/* All Products Button */}
         <button
-          onClick={() => onGenderChange("all")}
+          onClick={() => handleGenderClick("all")}
           className={`flex items-center justify-center w-10 h-10 rounded-full transition-all relative group ${
             selectedGenderFilter === "all"
               ? "bg-emerald-100"
               : "hover:bg-gray-100"
           }`}
           aria-label="View all products"
+          type="button"
         >
           <Circle
             className={`w-6 h-6 ${
@@ -32,11 +41,12 @@ const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
 
         {/* Men Button */}
         <button
-          onClick={() => onGenderChange("e")}
+          onClick={() => handleGenderClick("e")}
           className={`flex items-center justify-center w-10 h-10 rounded-full transition-all relative group ${
             selectedGenderFilter === "e" ? "bg-blue-100" : "hover:bg-gray-100"
           }`}
           aria-label="View men's products"
+          type="button"
         >
           <Mars
             className={`w-6 h-6 ${
@@ -49,11 +59,12 @@ const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
 
         {/* Women Button */}
         <button
-          onClick={() => onGenderChange("k")}
+          onClick={() => handleGenderClick("k")}
           className={`flex items-center justify-center w-10 h-10 rounded-full transition-all relative group ${
             selectedGenderFilter === "k" ? "bg-pink-100" : "hover:bg-gray-100"
           }`}
           aria-label="View women's products"
+          type="button"
         >
           <Venus
             className={`w-6 h-6 ${

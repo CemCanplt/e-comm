@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Filter } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useParams, useHistory } from "react-router-dom";
 import { fetchCategories } from "../store/actions/categoryActions";
 import { fetchProducts } from "../store/actions/productActions";
@@ -18,17 +18,17 @@ import ProductGrid from "./shop/ProductGrid";
 
 function Shop() {
   const dispatch = useDispatch();
-  const history = useHistory();
   const { gender, categorySlug, categoryId } = useParams();
+  const history = useHistory();
 
-  // Redux store state
   const { productList, priceRange, total, fetchState } = useSelector(
-    (state) => state.product
+    (state) => state.product,
+    shallowEqual
   );
-  const { categories } = useSelector((state) => state.categories);
-
+  const { categories } = useSelector((state) => state.categories, shallowEqual);
   // UI state
-  const [viewMode, setViewMode] = useState("grid");
+  const DEFAULT_VIEW_MODE = "grid";
+  const [viewMode, setViewMode] = useState(DEFAULT_VIEW_MODE);
   const [showFilters, setShowFilters] = useState(false);
   const [expandedFilterSections, setExpandedFilterSections] = useState({
     categories: true,
@@ -37,9 +37,11 @@ function Shop() {
 
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedGenderFilter, setSelectedGenderFilter] = useState(
-    gender === "kadin" ? "k" : gender === "erkek" ? "e" : "all"
-  );
+  const [selectedGenderFilter, setSelectedGenderFilter] = useState(() => {
+    if (gender === "kadin") return "k";
+    if (gender === "erkek") return "e";
+    return "all";
+  });
   const [filterText, setFilterText] = useState("");
   const [sortOption, setSortOption] = useState("featured");
   const [page, setPage] = useState(1);
@@ -92,14 +94,22 @@ function Shop() {
     dispatch(fetchProducts(params));
   }, [dispatch, gender, categoryId]);
 
-  // API'den ürünler gelince filtreleme yap
+  // API'den ürünler gelince işleme - Önceki client-side filtrelemeyi kaldırıyoruz
   useEffect(() => {
     if (fetchState === "FETCHED" && productList && productList.length > 0) {
       console.log("Ürün listesi güncellendi:", productList.length);
 
-      let filteredProducts = [...productList];
+      // API'den gelen ürünleri doğrudan göster, client-side filtreleme yapma
+      setDisplayedProducts(productList);
+    }
+  }, [productList, fetchState]);
 
-      // Cinsiyet filtreleme - kategori üzerinden yap
+  // API'den ürünler gelince filtreleme yap - Client-side filtrelemeyi tekrar ekleyelim
+  useEffect(() => {
+    if (fetchState === "FETCHED" && productList && productList.length > 0) {
+      console.log("Ürün listesi güncellendi:", productList.length);
+
+      // Cinsiyet filtresi aktif ise client-side filtreleme yapalım
       if (
         selectedGenderFilter !== "all" &&
         categories &&
@@ -112,73 +122,26 @@ function Shop() {
             category.gender || category.genderCode;
         });
 
-        // Cinsiyet filtresini uygula - kategoriler üzerinden
-        filteredProducts = filteredProducts.filter((product) => {
+        // Ürünleri filtrele - kategorilerin cinsiyetlerine göre
+        const filtered = productList.filter((product) => {
           if (product.category_id && categoryGenderMap[product.category_id]) {
             return (
               categoryGenderMap[product.category_id] === selectedGenderFilter
             );
           }
-          return false; // Kategori bilgisi yoksa filtreleme dışında tut
+          return false;
         });
 
         console.log(
-          `Cinsiyet filtresi sonrası (${selectedGenderFilter}): ${filteredProducts.length} ürün`
+          `Client-side cinsiyet filtresi sonrası (${selectedGenderFilter}): ${filtered.length} ürün`
         );
+        setDisplayedProducts(filtered);
+      } else {
+        // Filtre yoksa tüm ürünleri göster
+        setDisplayedProducts(productList);
       }
-
-      // Kategori filtrelemesi - sayısal karşılaştırma yapıldığından emin olalım
-      if (selectedCategory !== "All") {
-        const numericCategoryId = parseInt(selectedCategory);
-
-        filteredProducts = filteredProducts.filter((product) => {
-          const productCategoryId = parseInt(product.category_id);
-          return productCategoryId === numericCategoryId;
-        });
-
-        console.log(
-          `Kategori filtresi sonrası (${selectedCategory}): ${filteredProducts.length} ürün`
-        );
-      }
-
-      // Fiyat aralığı filtreleme
-      filteredProducts = filteredProducts.filter(
-        (product) =>
-          product.price >= priceValues[0] && product.price <= priceValues[1]
-      );
-      console.log(`Fiyat filtresi sonrası: ${filteredProducts.length} ürün`);
-
-      // Metin filtreleme
-      if (filterText) {
-        filteredProducts = filteredProducts.filter(
-          (product) =>
-            product.name?.toLowerCase().includes(filterText.toLowerCase()) || // name alanı kullan
-            product.title?.toLowerCase().includes(filterText.toLowerCase()) // veya title alanını kontrol et
-        );
-        console.log(
-          `Metin filtresi sonrası (${filterText}): ${filteredProducts.length} ürün`
-        );
-      }
-
-      // Sıralama
-      if (sortOption === "price-asc") {
-        filteredProducts.sort((a, b) => a.price - b.price);
-      } else if (sortOption === "price-desc") {
-        filteredProducts.sort((a, b) => b.price - a.price);
-      }
-
-      setDisplayedProducts(filteredProducts);
     }
-  }, [
-    productList,
-    fetchState,
-    categories,
-    selectedGenderFilter,
-    selectedCategory,
-    priceValues,
-    filterText,
-    sortOption,
-  ]);
+  }, [productList, fetchState, categories, selectedGenderFilter]);
 
   // Kategori haritası oluştur - hızlı erişim için
   const categoryMap = useMemo(() => {
@@ -191,23 +154,24 @@ function Shop() {
     return map;
   }, [categories]);
 
-  // Gender change handler - Bu fonksiyonu optimize ediyoruz
+  // Gender change handler - Düzeltilmiş versiyon
   const handleGenderChange = (gender) => {
-    console.log("Cinsiyet filtreleme:", gender);
+    console.log("Cinsiyet filtreleme başlatılıyor:", gender);
 
-    // Yükleniyor durumunu aktif et - FIXED
+    // İşleme başlamadan önce yükleme durumunu ayarla
     dispatch(setFetchState("FETCHING"));
 
-    // Redux state güncelle
+    // Redux ve component state'lerini güncelle
     dispatch(setGenderFilter(gender === "all" ? null : gender));
-
-    // Yerel state güncelle
     setSelectedGenderFilter(gender);
 
     // Sayfa 1'e dön
     setPage(1);
 
-    // Doğru URL'e git
+    // Kategori seçimini sıfırla
+    setSelectedCategory("All");
+
+    // Doğru URL'e yönlendir
     const newUrl =
       gender === "all"
         ? "/shop"
@@ -215,23 +179,20 @@ function Shop() {
 
     history.push(newUrl);
 
-    // Kategori seçimini sıfırla (cinsiyet değişirse)
-    if (categoryId) {
-      setSelectedCategory("All");
-    }
-
-    // Yeni veri getir - API'yi kullanarak direkt filtrelenmiş veri çek
+    // API çağrısı parametrelerini hazırla - server ve client filtering birlikte çalışsın
     const params = {
       limit: 12,
       offset: 0,
     };
 
-    // API çağrısında gender parametresi gönder
+    // Cinsiyet filtresi
     if (gender !== "all") {
       params.gender = gender;
     }
 
-    console.log("API çağrısı yapılıyor:", params);
+    console.log("Cinsiyet filtresi API parametreleri:", params);
+
+    // API çağrısını yap
     dispatch(fetchProducts(params));
   };
 
@@ -253,24 +214,44 @@ function Shop() {
     );
   };
 
-  // Apply filters with API call
+  // Apply filters with API call - Filtreleme fonksiyonunu düzeltiyoruz
   const applyFilters = () => {
+    // Always reset to page 1 when applying filters
+    setPage(1);
+
     const params = {
       limit: 12,
-      offset: (page - 1) * 12,
+      offset: 0, // İlk sayfadan başla
     };
 
     if (selectedCategory !== "All") params.category_id = selectedCategory;
     if (selectedGenderFilter !== "all") params.gender = selectedGenderFilter;
-    if (filterText) params.filter = filterText; // Make sure this is included
+    if (filterText) params.filter = filterText;
     if (sortOption !== "featured") params.sort = sortOption;
-    if (priceValues[0] > (priceRange?.min || 0))
-      params.priceMin = priceValues[0];
-    if (priceValues[1] < (priceRange?.max || 1000))
-      params.priceMax = priceValues[1];
 
-    console.log("Filters being applied:", params);
-    dispatch(fetchProducts(params));
+    // Fiyat filtrelerini ekle
+    if (priceValues[0] > (priceRange?.min || 0)) {
+      params.priceMin = priceValues[0];
+    }
+    if (priceValues[1] < (priceRange?.max || 1000)) {
+      params.priceMax = priceValues[1];
+    }
+
+    console.log("Filtreleme parametreleri:", params);
+
+    // Filtreleri API ile uygula
+    dispatch(fetchProducts(params))
+      .then((response) => {
+        console.log(`Toplam filtrelenmiş ürün: ${response.total}`);
+
+        // Filtrelenmiş ürünleri göster
+        setDisplayedProducts(response.products);
+
+        // Client-side filtreleme kaldırıldı - tamamen API'ye güveniyoruz
+      })
+      .catch((error) => {
+        console.error("Filtreleme hatası:", error);
+      });
   };
 
   // Update the handlePageChange function
@@ -284,28 +265,44 @@ function Shop() {
     // Calculate the correct offset based on the page number
     const offset = (newPage - 1) * 12;
 
-    // Build parameters object with all current filters
+    // Build params with all current filters
     const params = {
       limit: 12,
       offset: offset,
     };
 
-    // Apply any active filters
-    if (selectedGenderFilter !== "all") params.gender = selectedGenderFilter;
+    // Include all active filters in pagination requests
     if (selectedCategory !== "All") params.category_id = selectedCategory;
+    if (selectedGenderFilter !== "all") params.gender = selectedGenderFilter;
     if (filterText) params.filter = filterText;
     if (sortOption !== "featured") params.sort = sortOption;
-    if (priceValues[0] > (priceRange?.min || 0))
+
+    // Important: Include price filters in pagination
+    if (priceValues[0] > (priceRange?.min || 0)) {
       params.priceMin = priceValues[0];
-    if (priceValues[1] < (priceRange?.max || 1000))
+    }
+    if (priceValues[1] < (priceRange?.max || 1000)) {
       params.priceMax = priceValues[1];
+    }
 
-    // Log the pagination params to help with debugging
-    console.log(`Fetching page ${newPage} with offset:`, offset);
-    console.log("API parameters:", params);
+    console.log(
+      `Fetching page ${newPage} with offset:`,
+      offset,
+      "and filters:",
+      params
+    );
 
-    // Dispatch the action to fetch products with the updated parameters
-    dispatch(fetchProducts(params));
+    // This will fetch only the items for this page, with filters applied
+    dispatch(fetchProducts(params))
+      .then((response) => {
+        console.log(
+          `Page ${newPage} data received: ${response.products.length} items`
+        );
+        setDisplayedProducts(response.products);
+      })
+      .catch((error) => {
+        console.error("Error fetching page:", error);
+      });
   };
 
   // Reset all filters
@@ -420,78 +417,152 @@ function Shop() {
         }
       />
 
-      {/* Gender Filter */}
-      <section className="mb-8">
-        <GenderFilter
-          selectedGenderFilter={selectedGenderFilter}
-          title={pageTitle}
-          onGenderChange={handleGenderChange}
-        />
-      </section>
+      <GenderFilterSection
+        selectedGenderFilter={selectedGenderFilter}
+        title={pageTitle}
+        onGenderChange={handleGenderChange}
+      />
 
-      {/* Mobile filter button */}
-      <div className="md:hidden mb-6">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center justify-center w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors hover:bg-gray-50"
-        >
-          <Filter className="mr-2 h-5 w-5" />
-          {showFilters ? "Hide Filters" : "Show Filters"}
-        </button>
-      </div>
+      <MobileFilterButton
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+      />
 
-      {/* Main content area */}
-      <div className="grid grid-cols-12 gap-6">
-        {/* Sidebar with filters */}
-        <aside className="col-span-12 md:col-span-3">
-          <FilterBar
-            filterText={filterText}
-            setFilterText={setFilterText}
-            expandedFilterSections={expandedFilterSections}
-            toggleFilterSection={toggleFilterSection}
-            categories={categories}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            navigateToCategory={handleCategorySelect}
-            priceValues={priceValues}
-            handlePriceRangeChange={handlePriceRangeChange}
-            priceRange={priceRange}
-            dispatch={dispatch}
-            sortOption={sortOption}
-            showFilters={showFilters}
-            resetFilters={resetFilters}
-            setShowFilters={setShowFilters}
-            fetchFilteredProducts={applyFilters}
-          />
-        </aside>
-
-        {/* Product grid */}
-        <main className="col-span-12 md:col-span-9">
-          <ProductToolbar
-            displayedProducts={displayedProducts}
-            total={total}
-            sortOption={sortOption}
-            setSortOption={setSortOption}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            fetchFilteredProducts={applyFilters}
-          />
-
-          <ProductGrid
-            isLoading={isProductsLoading}
-            products={displayedProducts}
-            viewMode={viewMode}
-            totalPages={totalPages}
-            page={page}
-            handlePageChange={handlePageChange}
-            resetFilters={resetFilters}
-            selectedGenderFilter={selectedGenderFilter}
-            filterText={filterText}
-          />
-        </main>
-      </div>
+      <MainContentArea
+        filterText={filterText}
+        setFilterText={setFilterText}
+        expandedFilterSections={expandedFilterSections}
+        toggleFilterSection={toggleFilterSection}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        handleCategorySelect={handleCategorySelect}
+        priceValues={priceValues}
+        handlePriceRangeChange={handlePriceRangeChange}
+        priceRange={priceRange}
+        dispatch={dispatch}
+        sortOption={sortOption}
+        setSortOption={setSortOption} // Bu satırı ekleyin - eksik olan prop
+        showFilters={showFilters}
+        resetFilters={resetFilters}
+        setShowFilters={setShowFilters}
+        applyFilters={applyFilters}
+        displayedProducts={displayedProducts}
+        total={total}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        isProductsLoading={isProductsLoading}
+        totalPages={totalPages}
+        page={page}
+        handlePageChange={handlePageChange}
+        selectedGenderFilter={selectedGenderFilter}
+      />
     </div>
   );
 }
+
+const GenderFilterSection = ({
+  selectedGenderFilter,
+  title,
+  onGenderChange,
+}) => (
+  <section className="mb-8">
+    <GenderFilter
+      selectedGenderFilter={selectedGenderFilter}
+      title={title}
+      onGenderChange={onGenderChange}
+    />
+  </section>
+);
+
+const MobileFilterButton = ({ showFilters, setShowFilters }) => (
+  <div className="md:hidden mb-6">
+    <button
+      onClick={() => setShowFilters(!showFilters)}
+      className="flex items-center justify-center w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors hover:bg-gray-50"
+    >
+      <Filter className="mr-2 h-5 w-5" />
+      {showFilters ? "Hide Filters" : "Show Filters"}
+    </button>
+  </div>
+);
+
+const MainContentArea = ({
+  filterText,
+  setFilterText,
+  expandedFilterSections,
+  toggleFilterSection,
+  categories,
+  selectedCategory,
+  setSelectedCategory,
+  handleCategorySelect,
+  priceValues,
+  handlePriceRangeChange,
+  priceRange,
+  dispatch,
+  sortOption,
+  setSortOption, // Bu satırı ekleyin - eksik olan prop
+  showFilters,
+  resetFilters,
+  setShowFilters,
+  applyFilters,
+  displayedProducts,
+  total,
+  viewMode,
+  setViewMode,
+  isProductsLoading,
+  totalPages,
+  page,
+  handlePageChange,
+  selectedGenderFilter,
+}) => (
+  <div className="grid grid-cols-12 gap-6">
+    <aside className="col-span-12 md:col-span-3">
+      <FilterBar
+        filterText={filterText}
+        setFilterText={setFilterText}
+        expandedFilterSections={expandedFilterSections}
+        toggleFilterSection={toggleFilterSection}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        navigateToCategory={handleCategorySelect}
+        priceValues={priceValues}
+        handlePriceRangeChange={handlePriceRangeChange}
+        priceRange={priceRange}
+        dispatch={dispatch}
+        sortOption={sortOption}
+        showFilters={showFilters}
+        resetFilters={resetFilters}
+        setShowFilters={setShowFilters}
+        fetchFilteredProducts={applyFilters}
+      />
+    </aside>
+
+    <main className="col-span-12 md:col-span-9">
+      <ProductToolbar
+        displayedProducts={displayedProducts}
+        total={total}
+        sortOption={sortOption}
+        setSortOption={setSortOption} // Bu prop'u doğru şekilde geçiriyoruz
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        fetchFilteredProducts={applyFilters}
+      />
+
+      <ProductGrid
+        isLoading={isProductsLoading}
+        products={displayedProducts}
+        viewMode={viewMode}
+        totalPages={totalPages}
+        page={page}
+        handlePageChange={handlePageChange}
+        resetFilters={resetFilters}
+        selectedGenderFilter={selectedGenderFilter}
+        filterText={filterText}
+      />
+    </main>
+  </div>
+);
 
 export default Shop;

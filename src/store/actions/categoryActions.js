@@ -16,16 +16,15 @@ export const fetchCategoriesFailure = (error) => ({
 });
 
 export const fetchCategories = () => {
-  return async (dispatch) => {
-    try {
-      dispatch({
-        type: CATEGORY_ACTIONS.FETCH_CATEGORIES_START,
-      });
+  return (dispatch) => {
+    dispatch({
+      type: CATEGORY_ACTIONS.FETCH_CATEGORIES_START,
+    });
 
-      // Kategorileri çek
-      const categoriesResponse = await axios.get(
-        "https://workintech-fe-ecommerce.onrender.com/categories"
-      );
+    // Kategorileri çek
+    axios.get(
+      "https://workintech-fe-ecommerce.onrender.com/categories"
+    ).then(categoriesResponse => {
       const categoriesData = categoriesResponse.data;
 
       // Her kategori için code'dan slug ve gender bilgisi oluştur
@@ -47,33 +46,34 @@ export const fetchCategories = () => {
       });
 
       // Ürünleri çek (daha yüksek limit ile)
-      const productsResponse = await axios.get(
+      return axios.get(
         "https://workintech-fe-ecommerce.onrender.com/products?limit=500"
-      );
-      const productsData = productsResponse.data.products;
+      ).then(productsResponse => {
+        const productsData = productsResponse.data.products;
 
-      // Her kategori için ürün sayısını hesapla
-      const categoriesWithCounts = categoriesWithSlugs.map((category) => {
-        const count = productsData.filter(
-          (product) => product.category_id === category.id
-        ).length;
+        // Her kategori için ürün sayısını hesapla
+        const categoriesWithCounts = categoriesWithSlugs.map((category) => {
+          const count = productsData.filter(
+            (product) => product.category_id === category.id
+          ).length;
 
-        return {
-          ...category,
-          productCount: count,
-        };
+          return {
+            ...category,
+            productCount: count,
+          };
+        });
+
+        dispatch({
+          type: CATEGORY_ACTIONS.FETCH_CATEGORIES_SUCCESS,
+          payload: categoriesWithCounts,
+        });
       });
-
-      dispatch({
-        type: CATEGORY_ACTIONS.FETCH_CATEGORIES_SUCCESS,
-        payload: categoriesWithCounts,
-      });
-    } catch (error) {
+    }).catch(error => {
       console.error("Error fetching categories:", error);
       dispatch({
         type: CATEGORY_ACTIONS.FETCH_CATEGORIES_FAILURE,
         payload: error.message,
       });
-    }
+    });
   };
 };
