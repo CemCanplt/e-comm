@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
 
 const FilterBar = ({
@@ -20,57 +20,46 @@ const FilterBar = ({
   setShowFilters,
   fetchFilteredProducts,
 }) => {
-  // Tamamen bağımsız lokal input state
-  const [inputValue, setInputValue] = useState(filterText);
-
   // Çeşitli referanslar
   const searchInputRef = useRef(null);
   const priceTimeoutRef = useRef(null);
 
-  // Önemli: Input değişikliği *SADECE* lokal değeri günceller, global state'i değil
+  // Tek state olarak filterText kullanıyoruz ve direkt parent'tan geliyor
+  // handleInputChange fonksiyonu direkt parent state'i güncelliyor
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
+    setFilterText(e.target.value);
   };
 
-  // Enter tuşu veya Search butonuna basıldığında filtreleme yapılır
-  const applyFilter = () => {
-    // Filtreyi global state'e bildir ve API'yi çağır
-    setFilterText(inputValue);
-    fetchFilteredProducts({ filter: inputValue });
+  // Enter tuşuna basıldığında veya Search butonuna tıklandığında arama yapılır
+  const handleSearch = () => {
+    console.log("Arama yapılıyor:", filterText);
+
+    // API çağrısı yap
+    fetchFilteredProducts({ filter: filterText });
   };
 
-  // Enter tuşuna basıldığında filtreleme yap
+  // Enter tuşuna basıldığında arama yap
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      applyFilter();
+      e.preventDefault();
+      handleSearch();
     }
   };
 
   // Temizle butonuna tıklandığında
   const clearSearch = () => {
-    // Lokal input değerini temizle
-    setInputValue("");
+    // State'i temizle
+    setFilterText("");
 
     // Input'a fokuslan
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
 
-    // Global state ve URL'yi temizle
-    setFilterText("");
+    // Filtreyi temizle ve API çağrısı yap
     fetchFilteredProducts({ filter: "" });
+    console.log("Filtre temizlendi");
   };
-
-  // Global filtre metni değiştiğinde input güncelleme
-  useEffect(() => {
-    // Ancak input odaklanmış değilse ve değer güncel değilse
-    if (
-      document.activeElement !== searchInputRef.current &&
-      filterText !== inputValue
-    ) {
-      setInputValue(filterText || "");
-    }
-  }, [filterText]);
 
   // Component unmount olduğunda timer'ları temizle
   useEffect(() => {
@@ -129,23 +118,30 @@ const FilterBar = ({
         </button>
       </div>
 
-    {/* Search Filter - Completely Redesigned */}
-        <div className="mb-6 border-b pb-6">
-          <div className="flex items-center justify-between cursor-pointer mb-4">
-            <h3 className="font-bold text-gray-900">Search</h3>
-          </div>
-          <div className="flex flex-col gap-2 w-full">
-            <div className="relative w-full">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Search"
-              className="w-full px-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-            {inputValue && (
+      {/* Search Filter */}
+      <div className="mb-6 border-b pb-6">
+        <div className="flex items-center justify-between cursor-pointer mb-4">
+          <h3 className="font-bold text-gray-900">Search</h3>
+        </div>
+        <div className="flex flex-col gap-2 w-full">
+          <div className="relative w-full">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch();
+              }}
+            >
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={filterText}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Search"
+                className="w-full px-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </form>
+            {filterText && (
               <button
                 onClick={clearSearch}
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-100"
@@ -154,17 +150,18 @@ const FilterBar = ({
                 <X size={16} />
               </button>
             )}
-            </div>
-            <button
-            onClick={applyFilter}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2 transition-colors"
-            >
-            <Search size={20} />
-            </button>
           </div>
+          <button
+            onClick={handleSearch}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2 transition-colors"
+          >
+            <Search size={20} />
+          </button>
         </div>
+      </div>
 
-        {/* Categories filter */}
+      {/* Diğer filtreler aynı kalıyor */}
+      {/* Categories filter */}
       <div className="mb-6 border-b pb-6">
         <div
           className="flex items-center justify-between cursor-pointer mb-4"

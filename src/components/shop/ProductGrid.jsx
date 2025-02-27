@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react"; // Remove useState if it's not needed for other functionality
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Search } from "lucide-react";
@@ -129,19 +129,13 @@ const ProductGrid = ({
   products,
   viewMode,
   totalPages,
-  page,
-  handlePageChange: parentHandlePageChange,
+  page, // This will now be controlled entirely by the parent
+  handlePageChange, // This will be the parent's handler
   resetFilters,
   filterText,
   selectedGenderFilter,
 }) => {
   const dispatch = useDispatch();
-
-  const handlePageChange = (newPage) => {
-    if (parentHandlePageChange) {
-      parentHandlePageChange(newPage);
-    }
-  };
 
   if (isLoading) {
     return (

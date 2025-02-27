@@ -200,14 +200,14 @@ function Shop() {
 
     if (selectedCategory !== "All") params.category_id = selectedCategory;
     if (selectedGenderFilter !== "all") params.gender = selectedGenderFilter;
-    if (filterText) params.filter = filterText;
+    if (filterText) params.filter = filterText; // Make sure this is included
     if (sortOption !== "featured") params.sort = sortOption;
     if (priceValues[0] > (priceRange?.min || 0))
       params.priceMin = priceValues[0];
     if (priceValues[1] < (priceRange?.max || 1000))
       params.priceMax = priceValues[1];
 
-    console.log("Filtreler uygulanıyor:", params);
+    console.log("Filters being applied:", params);
     dispatch(fetchProducts(params));
   };
 
@@ -215,31 +215,33 @@ function Shop() {
   const handlePageChange = (newPage) => {
     // Update page state
     setPage(newPage);
-    
+
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
-  
+
     // Calculate the correct offset based on the page number
     const offset = (newPage - 1) * 12;
-    
+
     // Build parameters object with all current filters
     const params = {
       limit: 12,
       offset: offset,
     };
-  
+
     // Apply any active filters
     if (selectedGenderFilter !== "all") params.gender = selectedGenderFilter;
     if (selectedCategory !== "All") params.category_id = selectedCategory;
     if (filterText) params.filter = filterText;
     if (sortOption !== "featured") params.sort = sortOption;
-    if (priceValues[0] > (priceRange?.min || 0)) params.priceMin = priceValues[0];
-    if (priceValues[1] < (priceRange?.max || 1000)) params.priceMax = priceValues[1];
-  
+    if (priceValues[0] > (priceRange?.min || 0))
+      params.priceMin = priceValues[0];
+    if (priceValues[1] < (priceRange?.max || 1000))
+      params.priceMax = priceValues[1];
+
     // Log the pagination params to help with debugging
     console.log(`Fetching page ${newPage} with offset:`, offset);
     console.log("API parameters:", params);
-    
+
     // Dispatch the action to fetch products with the updated parameters
     dispatch(fetchProducts(params));
   };

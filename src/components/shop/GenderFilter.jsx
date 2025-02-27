@@ -28,9 +28,6 @@ const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
                 : "none"
             }
           />
-          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Tüm ürünler
-          </span>
         </button>
 
         {/* Men Button */}
@@ -48,9 +45,6 @@ const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
                 : "text-gray-500"
             }`}
           />
-          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Erkek ürünleri
-          </span>
         </button>
 
         {/* Women Button */}
@@ -68,9 +62,6 @@ const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {
                 : "text-gray-500"
             }`}
           />
-          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            Kadın ürünleri
-          </span>
         </button>
       </div>
     </div>
