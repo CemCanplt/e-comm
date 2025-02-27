@@ -25,138 +25,84 @@ export const setTotalProducts = (total) => ({
   payload: total,
 });
 
-// Fetch products with filtering, sorting, and pagination
+// fetchProducts fonksiyonunu basitleştir
 export const fetchProducts = (params = {}) => {
   return async (dispatch) => {
     try {
-      // Set loading state
-      dispatch({
-        type: PRODUCT_ACTIONS.SET_PRODUCTS_LOADING,
-        payload: true,
-      });
+      // Loading başlat
+      dispatch(fetchProductsStart());
 
-      // Build query parameters
+      // API parametrelerini oluştur
       const queryParams = new URLSearchParams();
 
-      if (params.category_id) {
-        queryParams.append("category_id", params.category_id);
-      }
-
-      if (params.filter) {
-        queryParams.append("filter", params.filter);
-      }
-
-      // Handle sorting properly
-      if (params.sort) {
-        // Store the sort value in the state for client-side sorting
-        dispatch({
-          type: PRODUCT_ACTIONS.SET_SORT_BY,
-          payload: params.sort,
-        });
-
-        // Map our sort parameters to API sort parameters if needed
-        let apiSortParam;
-        switch (params.sort) {
-          case "price:asc":
-            apiSortParam = "price";
-            break;
-          case "price:desc":
-            apiSortParam = "-price";
-            break;
-          case "rating:asc":
-            apiSortParam = "rating";
-            break;
-          case "rating:desc":
-            apiSortParam = "-rating";
-            break;
-          case "newest":
-            apiSortParam = "-created_at";
-            break;
-          case "name:asc":
-            apiSortParam = "name";
-            break;
-          case "name:desc":
-            apiSortParam = "-name";
-            break;
-          default:
-            // Don't add a sort parameter for "featured"
-            apiSortParam = null;
-        }
-
-        if (apiSortParam) {
-          queryParams.append("sort", apiSortParam);
-        }
-      }
-
-      if (params.limit) {
-        queryParams.append("limit", params.limit);
-      }
-
-      if (params.offset) {
-        queryParams.append("offset", params.offset);
-      }
-
-      // Add price range filtering if provided
-      if (params.priceMin !== undefined) {
-        queryParams.append("price_min", params.priceMin);
-      }
-
-      if (params.priceMax !== undefined) {
-        queryParams.append("price_max", params.priceMax);
-      }
-
-      // Add gender filtering
+      // Gender parametresi kontrolü ve ekleme
       if (params.gender) {
+        console.log(`Gender API parametresi: ${params.gender}`);
         queryParams.append("gender", params.gender);
       }
 
-      const queryString = queryParams.toString();
-      const url = `${API_URL}/products${queryString ? `?${queryString}` : ""}`;
-
-      console.log("Fetching products from:", url);
-      const response = await axios.get(url);
-
-      // After fetching, make sure to apply client-side sorting too
-      let products = response.data.products;
-
-      // Apply client-side sorting if params.sort is provided
-      if (params.sort) {
-        products = sortProducts(products, params.sort);
+      // Diğer parametreler...
+      queryParams.append("limit", params.limit || "12");
+      if (params.offset !== undefined) {
+        queryParams.append("offset", params.offset);
       }
 
-      // Update products in the store
-      dispatch({
-        type: PRODUCT_ACTIONS.SET_PRODUCTS,
-        payload: products,
-      });
+      if (params.category_id)
+        queryParams.append("category_id", params.category_id);
+      if (params.filter) queryParams.append("filter", params.filter);
+      if (params.sort) queryParams.append("sort", params.sort);
+      if (params.priceMin !== undefined)
+        queryParams.append("price_min", params.priceMin);
+      if (params.priceMax !== undefined)
+        queryParams.append("price_max", params.priceMax);
 
-      // Update total count in the store
-      dispatch({
-        type: PRODUCT_ACTIONS.SET_TOTAL_COUNT,
-        payload: response.data.total,
-      });
+      // API çağrısı
+      const url = `${API_URL}/products${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+      console.log("API çağrısı URL:", url);
 
-      // Reset loading state
-      dispatch({
-        type: PRODUCT_ACTIONS.SET_PRODUCTS_LOADING,
-        payload: false,
-      });
+      const response = await axios.get(url);
+
+      // Dönen ürün verisinin tam yapısını incele
+      if (response.data.products && response.data.products.length > 0) {
+        console.log(
+          "API'den dönen ilk ürün verisi:",
+          response.data.products[0]
+        );
+
+        // Gender bilgisini farklı alanlardan çıkarmaya çalış
+        const productSample = response.data.products[0];
+        console.log("Olası gender alanları:", {
+          gender: productSample.gender,
+          categoryGender: productSample.category?.gender,
+          categoryTitle: productSample.category?.title,
+          title: productSample.title,
+          name: productSample.name,
+          description: productSample.description,
+        });
+      }
+
+      // API'den dönen ürünlerin gender değerlerini kontrol et
+      if (response.data.products && response.data.products.length > 0) {
+        const genderSamples = {};
+        response.data.products.forEach((product) => {
+          if (product.gender) {
+            genderSamples[product.gender] =
+              (genderSamples[product.gender] || 0) + 1;
+          }
+        });
+        console.log("API ürünlerindeki gender değerleri:", genderSamples);
+      }
+
+      // Ürünleri state'e kaydet
+      dispatch(fetchProductsSuccess(response.data.products));
+      dispatch(setTotalProducts(response.data.total));
 
       return response.data;
     } catch (error) {
-      console.error("Error fetching products:", error);
-
-      dispatch({
-        type: PRODUCT_ACTIONS.SET_PRODUCTS_LOADING,
-        payload: false,
-      });
-
-      // Set fetch state to failed
-      dispatch({
-        type: PRODUCT_ACTIONS.SET_FETCH_STATE,
-        payload: "FAILED",
-      });
-
+      console.error("API hatası:", error);
+      dispatch(fetchProductsFailure(error));
       throw error;
     }
   };

@@ -129,13 +129,13 @@ const FilterBar = ({
         </button>
       </div>
 
-      {/* Search Filter - Completely Redesigned */}
-      <div className="mb-6 border-b pb-6">
-        <div className="flex items-center justify-between cursor-pointer mb-4">
-          <h3 className="font-bold text-gray-900">Search</h3>
-        </div>
-        <div className="flex flex-col gap-2 w-full">
-          <div className="relative w-full">
+    {/* Search Filter - Completely Redesigned */}
+        <div className="mb-6 border-b pb-6">
+          <div className="flex items-center justify-between cursor-pointer mb-4">
+            <h3 className="font-bold text-gray-900">Search</h3>
+          </div>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="relative w-full">
             <input
               ref={searchInputRef}
               type="text"
@@ -143,9 +143,8 @@ const FilterBar = ({
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Search"
-              className="w-full pl-9 pr-10 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             {inputValue && (
               <button
                 onClick={clearSearch}
@@ -155,17 +154,17 @@ const FilterBar = ({
                 <X size={16} />
               </button>
             )}
-          </div>
-          <button
+            </div>
+            <button
             onClick={applyFilter}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2 transition-colors"
-          >
-            <Search size={24} />
-          </button>
+            >
+            <Search size={20} />
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Categories filter */}
+        {/* Categories filter */}
       <div className="mb-6 border-b pb-6">
         <div
           className="flex items-center justify-between cursor-pointer mb-4"

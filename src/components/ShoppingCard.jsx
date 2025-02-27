@@ -7,24 +7,16 @@ import {
   Plus,
   Minus,
   ArrowLeft,
-  ShoppingCart as CardIcon, // ShoppingCard değil, ShoppingCart olarak düzeltildi
+  ShoppingCart as CardIcon,
 } from "lucide-react";
 
-// Resim görüntüleme yardımcı fonksiyonu
+// Simplified image helper
 const getProductImage = (item) => {
   if (!item) return "https://placehold.co/100x100/gray/white?text=No+Image";
-
-  if (item.images && Array.isArray(item.images) && item.images.length > 0) {
-    if (typeof item.images[0] === "object" && item.images[0]?.url) {
-      return item.images[0].url;
-    }
-    return item.images[0];
-  }
-
-  if (item.image) {
-    return item.image;
-  }
-
+  
+  if (item.images?.length > 0) return typeof item.images[0] === "object" ? item.images[0]?.url : item.images[0];
+  if (item.image) return item.image;
+  
   return "https://placehold.co/100x100/gray/white?text=No+Image";
 };
 
@@ -35,30 +27,19 @@ function ShoppingCard() {
 
   const updateItemQuantity = (id, newQuantity) => {
     if (newQuantity < 1) return;
-
-    const updatedCard = card.map((item) =>
+    dispatch(setCard(card.map(item => 
       item.id === id ? { ...item, quantity: newQuantity } : item
-    );
-
-    dispatch(setCard(updatedCard));
+    )));
   };
 
   const removeItem = (id) => {
-    const updatedCard = card.filter((item) => item.id !== id);
-    dispatch(setCard(updatedCard));
-  };
-
-  const clearCard = () => {
-    dispatch(setCard([]));
+    dispatch(setCard(card.filter(item => item.id !== id)));
   };
 
   // Calculate totals
-  const subtotal = card.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const subtotal = card.reduce((total, item) => total + item.price * item.quantity, 0);
   const shipping = subtotal > 100 ? 0 : 10;
-  const tax = subtotal * 0.08; // 8% tax
+  const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
   if (card.length === 0) {
@@ -102,25 +83,19 @@ function ShoppingCard() {
             {card.map((item) => (
               <div key={item.id} className="border-b last:border-b-0">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center">
-                  {/* Product Info */}
+                  {/* Product */}
                   <div className="md:col-span-6 flex gap-4">
-                    <div className="w-20 h-20 flex-shrink-0">
-                      <img
-                        src={getProductImage(item)}
-                        alt={item.name}
-                        className="w-full h-full object-cover rounded"
-                      />
-                    </div>
+                    <img
+                      src={getProductImage(item)}
+                      alt={item.name}
+                      className="w-20 h-20 object-cover rounded flex-shrink-0"
+                    />
                     <div>
                       <h3 className="font-medium">
                         <Link
-                          to={`/product/${
-                            item.gender === "k" ? "kadin" : "erkek"
-                          }/${
-                            item.category_slug ||
-                            item.category
-                              ?.toLowerCase()
-                              .replace(/[^a-z0-9-]/g, "-") ||
+                          to={`/product/${item.gender === "k" ? "kadin" : "erkek"}/${
+                            item.category_slug || 
+                            item.category?.toLowerCase().replace(/[^a-z0-9-]/g, "-") || 
                             "kategori"
                           }/${item.id}`}
                           className="hover:text-blue-600"
@@ -149,9 +124,7 @@ function ShoppingCard() {
                     <span className="md:hidden text-gray-500">Quantity:</span>
                     <div className="flex items-center border rounded-md">
                       <button
-                        onClick={() =>
-                          updateItemQuantity(item.id, item.quantity - 1)
-                        }
+                        onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
                         className="px-2 py-1 hover:bg-gray-100"
                       >
                         <Minus className="h-4 w-4" />
@@ -160,18 +133,11 @@ function ShoppingCard() {
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) =>
-                          updateItemQuantity(
-                            item.id,
-                            parseInt(e.target.value) || 1
-                          )
-                        }
+                        onChange={(e) => updateItemQuantity(item.id, parseInt(e.target.value) || 1)}
                         className="w-12 text-center border-x"
                       />
                       <button
-                        onClick={() =>
-                          updateItemQuantity(item.id, item.quantity + 1)
-                        }
+                        onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
                         className="px-2 py-1 hover:bg-gray-100"
                       >
                         <Plus className="h-4 w-4" />
@@ -182,9 +148,7 @@ function ShoppingCard() {
                   {/* Total */}
                   <div className="md:col-span-2 flex justify-between md:justify-end items-center">
                     <span className="md:hidden text-gray-500">Total:</span>
-                    <span className="font-medium">
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </span>
+                    <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -201,7 +165,7 @@ function ShoppingCard() {
               Continue Shopping
             </Link>
             <button
-              onClick={clearCard}
+              onClick={() => dispatch(setCard([]))}
               className="px-6 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors"
             >
               Clear Card

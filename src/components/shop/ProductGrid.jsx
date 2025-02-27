@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Search } from "lucide-react"; // Bu satırı ekleyin
 import LoadingSpinner from "../common/LoadingSpinner";
 import { fetchProducts } from "../../store/actions/productActions";
 
@@ -153,6 +153,7 @@ const ProductGrid = ({
   categoryId,
   filterText,
   sortOption,
+  selectedGenderFilter,
 }) => {
   const dispatch = useDispatch();
   const [currentPage, setPage] = useState(page);
@@ -189,20 +190,30 @@ const ProductGrid = ({
     );
   }
 
+  // No products found display
   if (products.length === 0) {
     return (
       <div className="text-center py-16 bg-white rounded-lg shadow-sm">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+          <Search className="h-10 w-10 text-gray-400" />
+        </div>
         <h3 className="text-xl font-semibold text-gray-800 mb-2">
-          No Products Found
+          Ürün Bulunamadı
         </h3>
         <p className="text-gray-500 mb-6">
-          Try adjusting your filters or search criteria.
+          {filterText
+            ? `"${filterText}" ile ilgili ürün bulunamadı.`
+            : selectedGenderFilter === "k"
+            ? "Kadın ürünleri kategorisinde ürün bulunamadı."
+            : selectedGenderFilter === "e"
+            ? "Erkek ürünleri kategorisinde ürün bulunamadı."
+            : "Filtrelerinize uygun ürün bulunamadı."}
         </p>
         <button
           onClick={resetFilters}
           className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
-          Clear Filters
+          Filtreleri Temizle
         </button>
       </div>
     );
