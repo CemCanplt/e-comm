@@ -1,125 +1,67 @@
-import React, { useRef, useEffect } from "react";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import React, { useState } from "react";
 
-const PriceRangeFilter = ({
-  expandedFilterSections,
-  toggleFilterSection,
-  priceValues,
-  handlePriceRangeChange,
-  priceRange,
-  fetchFilteredProducts
-}) => {
-  const priceTimeoutRef = useRef(null);
+const PriceRangeFilter = ({ onChange }) => {
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
-  // Component unmount olduğunda timer'ları temizle
-  useEffect(() => {
-    return () => {
-      if (priceTimeoutRef.current) clearTimeout(priceTimeoutRef.current);
-    };
-  }, []);
+  const handleApplyFilter = () => {
+    const min = minPrice === "" ? 0 : Number(minPrice);
+    const max = maxPrice === "" ? null : Number(maxPrice);
 
-  // Fiyat aralığı değişikliği
-  const handlePriceChange = (e) => {
-    const { name, value } = e.target;
-    const newValue = Number(value);
-    let newMin = priceValues[0];
-    let newMax = priceValues[1];
-
-    if (name === "min") {
-      newMin = newValue;
-      handlePriceRangeChange(e);
+    if (max !== null && min > max) {
+      // Eğer minimum fiyat maksimumdan büyükse, değerleri değiştir
+      onChange([max, min]);
     } else {
-      newMax = newValue;
-      handlePriceRangeChange(e);
+      onChange([min, max || 999999]);
     }
-
-    // Zamanlayıcı ile debounce yaparak API çağrısını geciktir
-    if (priceTimeoutRef.current) {
-      clearTimeout(priceTimeoutRef.current);
-    }
-
-    priceTimeoutRef.current = setTimeout(() => {
-      // API'yi çağır - fiyat filtresini sunucu tarafında uygula
-      fetchFilteredProducts({
-        priceMin: newMin,
-        priceMax: newMax,
-        offset: 0, // Önemli: Sayfa 1'e dön
-      });
-    }, 500);
   };
 
   return (
-    <div className="mb-6 border-b pb-6">
-      <div
-        className="flex items-center justify-between cursor-pointer mb-4"
-        onClick={() => toggleFilterSection("price")}
-      >
-        <h3 className="font-bold text-gray-900">Price Range</h3>
-        {expandedFilterSections.price ? (
-          <ChevronUp className="h-4 w-4 text-gray-500" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-gray-500" />
-        )}
+    <div className="px-2 py-4 space-y-4">
+      <div className="space-y-4">
+        <div>
+          <label
+            htmlFor="minPrice"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Minimum Price
+          </label>
+          <input
+            type="number"
+            id="minPrice"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+            placeholder="$0"
+            min="0"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="maxPrice"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Maximum Price
+          </label>
+          <input
+            type="number"
+            id="maxPrice"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+            placeholder="No limit"
+            min="0"
+          />
+        </div>
       </div>
 
-      {expandedFilterSections.price && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="bg-gray-50 rounded px-3 py-2 w-[45%]">
-              <label className="block text-xs text-gray-500 mb-1">Min</label>
-              <input
-                type="number"
-                name="min"
-                value={priceValues[0]}
-                onChange={handlePriceChange}
-                className="w-full bg-transparent focus:outline-none text-gray-900"
-                min={priceRange.min}
-                max={priceRange.max}
-              />
-            </div>
-            <span className="text-gray-300">—</span>
-            <div className="bg-gray-50 rounded px-3 py-2 w-[45%]">
-              <label className="block text-xs text-gray-500 mb-1">Max</label>
-              <input
-                type="number"
-                name="max"
-                value={priceValues[1]}
-                onChange={handlePriceChange}
-                className="w-full bg-transparent focus:outline-none text-gray-900"
-                min={priceRange.min}
-                max={priceRange.max}
-              />
-            </div>
-          </div>
-
-          <div className="px-1">
-            <input
-              type="range"
-              min={priceRange.min}
-              max={priceRange.max}
-              value={priceValues[0]}
-              onChange={(e) => {
-                handlePriceChange({
-                  target: { name: "min", value: e.target.value },
-                });
-              }}
-              className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm"
-            />
-            <input
-              type="range"
-              min={priceRange.min}
-              max={priceRange.max}
-              value={priceValues[1]}
-              onChange={(e) => {
-                handlePriceChange({
-                  target: { name: "max", value: e.target.value },
-                });
-              }}
-              className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm"
-            />
-          </div>
-        </div>
-      )}
+      <button
+        onClick={handleApplyFilter}
+        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+      >
+        Apply Price Filter
+      </button>
     </div>
   );
 };

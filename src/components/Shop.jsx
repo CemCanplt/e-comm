@@ -1,34 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 import { fetchCategories } from "../store/actions/categoryActions";
+import { fetchProducts } from "../store/actions/productActions";
 import ShopHeader from "./shop/ShopHeader";
-import ShopFilterSection from "./shop/ShopFilterSection";
 import ShopProducts from "./shop/ShopProducts";
-
-// Custom hooks
 import useShopFilters from "../hooks/useShopFilters";
+import FilterBar from "./shop/filters/FilterBar";
 
 function Shop() {
   const dispatch = useDispatch();
+  const history = useHistory();
   const { gender, categorySlug, categoryId } = useParams();
-  const { categories } = useSelector((state) => state.categories);
+  const { products, categories, loading } = useSelector((state) => ({
+    products: state.product.productList,
+    categories: state.categories.items || [],
+    loading: state.product.fetchState === "FETCHING",
+  }));
 
-  // Default UI state as a fallback
-  const [defaultUi, setDefaultUi] = useState({
-    viewMode: "grid",
-    showFilters: false,
-    expandedSections: {
-      categories: true,
-      price: true,
-    },
-  });
+  const initialLoadDone = useRef(false);
+  const prevFilters = useRef(null);
 
-  // Use the custom hook for filter management
+  // Load categories
+  useEffect(() => {
+    if (!categories.length) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, categories.length]);
+
+  // Use filter hook
   const {
     filters,
-    ui,
-    setUi,
     handleGenderChange,
     handleCategoryChange,
     handleTextSearch,
@@ -36,124 +38,112 @@ function Shop() {
     handlePriceChange,
     handlePageChange,
     resetFilters,
-    toggleFilterSection,
-    filteredCategories,
-    applyFilters,
-  } = useShopFilters({ gender, categoryId, categories }) || {};
+  } = useShopFilters({
+    gender: gender === "women" ? "k" : gender === "men" ? "e" : null,
+    categoryId,
+    categories,
+  });
 
-  // Fetch categories on mount
-  useEffect(() => {
-    dispatch(fetchCategories());
-  }, [dispatch]);
+  // Handle gender filter change
+  const onGenderChange = (value) => {
+    const newGender = value === "all" ? null : value;
+    handleGenderChange(newGender);
 
-  // useEffect içinde başlangıç veri çekme işlemini ekleyin:
-  useEffect(() => {
-    // Sayfa ilk yüklendiğinde tüm ürünleri çek
-    dispatch(fetchProducts({ limit: 12, offset: 0 }));
-  }, [dispatch]);
-
-  // Initialize filters from URL params
-  useEffect(() => {
-    if (categories?.length > 0) {
-      // Set gender filter from URL
-      if (gender && handleGenderChange) {
-        const genderCode = gender === "kadin" ? "k" : "e";
-        handleGenderChange(genderCode);
+    // Update URL
+    let newPath = "/shop";
+    if (newGender) {
+      newPath += `/${newGender === "k" ? "women" : "men"}`;
+      if (filters.category) {
+        const category = categories.find((c) => c.id === filters.category);
+        if (category) {
+          const slug =
+            category.slug || category.title.toLowerCase().replace(/\s+/g, "-");
+          newPath += `/${slug}/${category.id}`;
+        }
       }
-
-      // Set category filter from URL
-      if (categoryId && handleCategoryChange) {
-        handleCategoryChange(categoryId);
+    } else if (filters.category) {
+      const category = categories.find((c) => c.id === filters.category);
+      if (category) {
+        const slug =
+          category.slug || category.title.toLowerCase().replace(/\s+/g, "-");
+        newPath += `/${slug}/${category.id}`;
       }
     }
-  }, [
-    categories,
-    gender,
-    categoryId,
-    handleGenderChange,
-    handleCategoryChange,
-  ]);
-
-  // Page title calculation
-  const pageTitle = gender
-    ? gender === "kadin"
-      ? "Women's Collection"
-      : "Men's Collection"
-    : "All Products";
-
-  // Use either the hook's UI state or the default UI state
-  const currentUi = ui || defaultUi;
-  const setCurrentUi = setUi || setDefaultUi;
-
-  // Use safe default values for filters
-  const currentFilters = filters || {
-    gender: gender ? (gender === "kadin" ? "k" : "e") : "all",
-    category: categoryId ? parseInt(categoryId) : "All",
-    text: "",
-    sort: "featured",
-    page: 1,
-    priceRange: [0, 1000],
+    history.push(newPath);
   };
+
+  // Check if filters have changed
+  const haveFiltersChanged = () => {
+    if (!prevFilters.current) return true;
+
+    return JSON.stringify(prevFilters.current) !== JSON.stringify(filters);
+  };
+
+  // Load products on initial load and URL parameter changes
+  useEffect(() => {
+    if (!initialLoadDone.current || haveFiltersChanged()) {
+      const selectedCategory = categories.find(
+        (c) => c.id === filters.category
+      );
+
+      const params = {
+        limit: 12,
+        offset: (filters.page - 1) * 12,
+        ...(filters.category && { category_id: filters.category }),
+        ...(filters.gender && { gender: filters.gender }),
+        ...(filters.text && { filter: filters.text }),
+        ...(filters.sort !== "featured" && { sort: filters.sort }),
+        ...(filters.priceRange && {
+          price_min: filters.priceRange[0],
+          price_max: filters.priceRange[1],
+        }),
+      };
+
+      // Add gender from category if available
+      if (selectedCategory?.gender) {
+        params.gender = selectedCategory.gender;
+      }
+
+      dispatch(fetchProducts(params));
+      initialLoadDone.current = true;
+      prevFilters.current = { ...filters };
+    }
+  }, [dispatch, filters, categories]);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Shop header with breadcrumb and gender filters */}
       <ShopHeader
         gender={gender}
+        selectedGender={filters.gender}
+        onGenderChange={onGenderChange}
+        categories={categories}
         categorySlug={categorySlug}
-        category={categories?.find((c) => c.id === currentFilters.category)}
-        selectedGenderFilter={currentFilters.gender}
-        handleGenderChange={handleGenderChange || (() => {})}
-        pageTitle={pageTitle}
       />
 
-      {/* Mobile filter toggle button */}
-      <div className="md:hidden mb-6">
-        <button
-          onClick={() =>
-            setCurrentUi((prev) => ({
-              ...prev,
-              showFilters: !currentUi.showFilters,
-            }))
-          }
-          className="flex items-center justify-center w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors hover:bg-gray-50"
-        >
-          {currentUi.showFilters ? "Hide Filters" : "Show Filters"}
-        </button>
-      </div>
+      <div className="flex flex-col lg:flex-row gap-8">
+        <aside className="w-full lg:w-1/4">
+          <div className="sticky top-20 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <FilterBar
+              categories={categories}
+              selectedCategory={filters.category}
+              filterText={filters.text}
+              setFilterText={handleTextSearch}
+              handleCategoryChange={handleCategoryChange}
+              handlePriceChange={handlePriceChange}
+              resetFilters={resetFilters}
+            />
+          </div>
+        </aside>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* Filter sidebar */}
-        <ShopFilterSection
-          filters={currentFilters}
-          ui={currentUi}
-          setUi={setCurrentUi}
-          expandedFilterSections={currentUi.expandedSections}
-          toggleFilterSection={toggleFilterSection || (() => {})}
-          handleCategoryChange={handleCategoryChange || (() => {})}
-          handleTextSearch={handleTextSearch || (() => {})}
-          handlePriceChange={handlePriceChange || (() => {})}
-          resetFilters={resetFilters || (() => {})}
-          filteredCategories={filteredCategories || []}
-          applyFilters={applyFilters || (() => {})}
-        />
-
-        {/* Product grid area */}
-        <ShopProducts
-          filters={currentFilters}
-          ui={currentUi}
-          setUi={setCurrentUi}
-          handleSortChange={handleSortChange || (() => {})}
-          handlePageChange={handlePageChange || (() => {})}
-          resetFilters={resetFilters || (() => {})}
-          selectedGenderFilter={currentFilters.gender}
-          sortOption={currentFilters.sort}
-          viewMode={currentUi.viewMode}
-          setViewMode={(mode) =>
-            setCurrentUi((prev) => ({ ...prev, viewMode: mode }))
-          }
-          filterText={currentFilters.text}
-        />
+        <main className="w-full lg:w-3/4">
+          <ShopProducts
+            loading={loading}
+            filters={filters}
+            handleSortChange={handleSortChange}
+            handlePageChange={handlePageChange}
+            resetFilters={resetFilters}
+          />
+        </main>
       </div>
     </div>
   );

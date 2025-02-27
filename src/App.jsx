@@ -45,7 +45,11 @@ function App() {
             path="/shop/:gender/:categorySlug/:categoryId"
             component={Shop}
           />
+
+          {/* Product detail routes */}
+
           <Route
+            exact
             path="/product/:gender/:categorySlug/:productId"
             component={ProductDetail}
           />

@@ -1,4 +1,3 @@
-import React from "react";
 import { Circle, Mars, Venus } from "lucide-react";
 
 const GenderFilter = ({ selectedGenderFilter, title, onGenderChange }) => {

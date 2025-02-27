@@ -1,11 +1,10 @@
-import React from 'react';
-import { useHistory } from 'react-router-dom';
+import React from "react";
+import { useHistory } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const ProductCard = ({ product }) => {
   const history = useHistory();
-  
-  // Create SEO-friendly slug from product name
-  const slug = product.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "product";
+  const { items: categories } = useSelector((state) => state.categories);
 
   // Display image based on product data structure
   const displayImage = () => {
@@ -48,17 +47,71 @@ const ProductCard = ({ product }) => {
 
   // Build the product URL based on available data
   const getProductUrl = () => {
-    const gender = product.gender === "k" ? "kadin" : "erkek";
-    const categorySlug = product.category_slug || 
-      (product.category ? product.category.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "kategori");
-    
-    return `/product/${gender}/${categorySlug}/${product.id}`;
+    // Find category info from Redux store
+    const categoryInfo = categories.find(
+      (cat) => cat.id === product.category_id
+    );
+
+    // Ensure we have a valid product ID
+    const productId = product.id || product.product_id;
+    if (!productId) {
+      console.error("Missing product ID:", product);
+      return "/shop"; // Fallback to shop page if invalid
+    }
+
+    // Default values
+    let gender = "erkek";
+    let categoryName = "kategori";
+
+    // Get gender and category name from category info
+    if (categoryInfo) {
+      gender = categoryInfo.genderText || "erkek";
+      categoryName =
+        categoryInfo.slug ||
+        categoryInfo.title
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "");
+    } else {
+      // Fallback to product data
+      if (
+        product.gender === "k" ||
+        product.gender === "kadin" ||
+        product.gender === "women"
+      ) {
+        gender = "kadin";
+      }
+      if (product.category) {
+        categoryName = product.category
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+      }
+    }
+
+    // Debug information
+    console.log("Building Product URL:", {
+      gender,
+      categoryName,
+      productId,
+      categoryInfo,
+      rawProduct: product,
+    });
+
+    // Always use the full URL structure
+    return `/product/${gender}/${categoryName}/${productId}`;
+  };
+
+  const handleProductClick = (e) => {
+    e.preventDefault();
+    const url = getProductUrl();
+    console.log("Navigating to:", url);
+    history.push(url);
   };
 
   return (
     <div
       className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md"
-      onClick={() => history.push(getProductUrl())}
+      onClick={handleProductClick}
     >
       <div className="aspect-w-1 aspect-h-1">
         <img
@@ -95,4 +148,6 @@ const ProductCard = ({ product }) => {
   );
 };
 
+
 export default ProductCard;
+

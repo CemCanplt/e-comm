@@ -4,25 +4,12 @@ import { Heart, Star, Search } from "lucide-react";
 
 const ProductGrid = ({
   products = [],
-  viewMode = "grid",
-  isLoading,
   totalPages,
-  page = 1,
-  handlePageChange,
-  resetFilters,
-  selectedGenderFilter,
+  currentPage,
+  onPageChange,
+  onResetFilters,
   filterText,
-  categories = [],
 }) => {
-  // İlk yükleme durumunda boş durum gösterme
-  if (isLoading || fetchState === "FETCHING") {
-    return (
-      <div className="py-12 flex justify-center">
-        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
   if (!products || products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg shadow-sm text-center">
@@ -34,15 +21,11 @@ const ProductGrid = ({
         </h3>
         <p className="text-gray-500 mb-6">
           {filterText
-            ? `No products found matching "${filterText}"`
-            : selectedGenderFilter === "k"
-            ? "No products found in women's category"
-            : selectedGenderFilter === "e"
-            ? "No products found in men's category"
-            : "No products match your current filters"}
+            ? `No products matching "${filterText}" found`
+            : "No products match the selected filters"}
         </p>
         <button
-          onClick={resetFilters}
+          onClick={onResetFilters}
           className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
           Clear Filters
@@ -51,290 +34,215 @@ const ProductGrid = ({
     );
   }
 
-  // Function to get gender type based on product's category
-  const getGenderType = (productCategoryId) => {
-    if (!categories || categories.length === 0) return "kadin";
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
 
-    const category = categories.find((cat) => cat.id === productCategoryId);
-    if (category) {
-      return (category.gender || category.genderCode) === "k"
-        ? "kadin"
-        : "erkek";
-    }
+      {totalPages > 1 && (
+        <Pagination
+          totalPages={totalPages}
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+        />
+      )}
+    </div>
+  );
+};
 
-    return "kadin"; // Default to women's category
-  };
-
-  // Function to get category slug
-  const getCategorySlug = (productCategoryId) => {
-    if (!categories || categories.length === 0) return "category";
-
-    const category = categories.find((cat) => cat.id === productCategoryId);
-    if (category) {
-      return (
-        category.slug ||
-        category.title
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, "")
-      );
-    }
-
-    return "category";
-  };
-
-  // Get proper product image
-  const getProductImage = (product) => {
+const ProductCard = ({ product }) => {
+  const getProductImage = () => {
     if (product.images) {
       if (typeof product.images === "string") {
         try {
           const parsed = JSON.parse(product.images);
           return Array.isArray(parsed) && parsed.length > 0
             ? parsed[0]
-            : product.image || "https://via.placeholder.com/300";
+            : product.image ||
+                "https://placehold.co/300x300/gray/white?text=No+Image";
         } catch (e) {
           return product.images;
         }
       } else if (Array.isArray(product.images) && product.images.length > 0) {
-        if (typeof product.images[0] === "object") {
-          return product.images[0].url || "https://via.placeholder.com/300";
-        }
-        return product.images[0];
+        return typeof product.images[0] === "object"
+          ? product.images[0].url
+          : product.images[0];
       }
     }
+    return (
+      product.image || "https://placehold.co/300x300/gray/white?text=No+Image"
+    );
+  };
 
-    return product.image || "https://via.placeholder.com/300";
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Products grid */}
-      <div
-        className={`grid ${
-          viewMode === "grid"
-            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "grid-cols-1 gap-4"
-        }`}
+    <article className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md">
+      <Link
+        to={`/product/${product.gender === "k" ? "women" : "men"}/${
+          product.category_slug ||
+          product.category?.toLowerCase().replace(/\s+/g, "-") ||
+          "category"
+        }/${product.id}`}
+        className="block relative pb-[100%] overflow-hidden"
       >
-        {products.map((product) => {
-          const genderType = getGenderType(product.category_id);
-          const categorySlug = getCategorySlug(product.category_id);
-          const productImage = getProductImage(product);
+        <img
+          src={getProductImage()}
+          alt={product.name}
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          onError={(e) => {
+            e.target.src =
+              "https://placehold.co/300x300/gray/white?text=No+Image";
+          }}
+        />
+      </Link>
 
-          return viewMode === "grid" ? (
-            <GridCard
-              key={product.id}
-              product={product}
-              genderType={genderType}
-              categorySlug={categorySlug}
-              productImage={productImage}
-            />
-          ) : (
-            <ListCard
-              key={product.id}
-              product={product}
-              genderType={genderType}
-              categorySlug={categorySlug}
-              productImage={productImage}
-            />
-          );
-        })}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-8">
-          <nav className="flex flex-wrap items-center gap-2">
-            {/* Previous button */}
-            {page > 1 && (
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                className="px-3 py-1 bg-white text-gray-700 hover:bg-gray-50 rounded-md"
-              >
-                &lt;
-              </button>
-            )}
-
-            {/* First page */}
-            {page > 3 && (
-              <>
-                <button
-                  onClick={() => handlePageChange(1)}
-                  className="px-3 py-1 bg-white text-gray-700 hover:bg-gray-50 rounded-md"
-                >
-                  1
-                </button>
-                {page > 4 && <span className="px-1">...</span>}
-              </>
-            )}
-
-            {/* Pages around current page */}
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (page <= 3) {
-                pageNum = i + 1;
-              } else if (page >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = page - 2 + i;
-              }
-              return pageNum > 0 && pageNum <= totalPages ? pageNum : null;
-            })
-              .filter(Boolean)
-              .map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => handlePageChange(pageNum)}
-                  className={`px-3 py-1 rounded-md ${
-                    pageNum === page
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-
-            {/* Last page */}
-            {page < totalPages - 2 && (
-              <>
-                {page < totalPages - 3 && <span className="px-1">...</span>}
-                <button
-                  onClick={() => handlePageChange(totalPages)}
-                  className="px-3 py-1 bg-white text-gray-700 hover:bg-gray-50 rounded-md"
-                >
-                  {totalPages}
-                </button>
-              </>
-            )}
-
-            {/* Next button */}
-            {page < totalPages && (
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                className="px-3 py-1 bg-white text-gray-700 hover:bg-gray-50 rounded-md"
-              >
-                &gt;
-              </button>
-            )}
-          </nav>
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="flex justify-between items-start mb-2">
+          <h2 className="text-lg font-medium text-gray-800">
+            <Link
+              to={`/product/${product.gender === "k" ? "women" : "men"}/${
+                product.category_slug ||
+                product.category?.toLowerCase().replace(/\s+/g, "-") ||
+                "category"
+              }/${product.id}`}
+            >
+              {product.name}
+            </Link>
+          </h2>
+          <button
+            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700 hover:text-red-500"
+            aria-label="Add to wishlist"
+          >
+            <Heart className="h-5 w-5" />
+          </button>
         </div>
-      )}
-    </div>
+
+        <div className="flex items-center mb-2">
+          <div className="flex items-center">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`h-4 w-4 ${
+                  star <= Math.round(product.rating || 0)
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-xs text-gray-500 ml-2">
+            ({product.rating_count || 0})
+          </span>
+        </div>
+
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          {product.description || "No description available"}
+        </p>
+
+        <div className="mt-auto">
+          {product.discount_price ? (
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-xl text-red-600">
+                {formatPrice(product.discount_price)}
+              </p>
+              <p className="text-gray-400 line-through">
+                {formatPrice(product.price)}
+              </p>
+            </div>
+          ) : (
+            <p className="font-bold text-xl text-gray-900">
+              {formatPrice(product.price)}
+            </p>
+          )}
+        </div>
+      </div>
+    </article>
   );
 };
 
-// Product Grid Card View
-const GridCard = ({ product, genderType, categorySlug, productImage }) => (
-  <article className="group bg-white rounded-lg shadow-sm overflow-hidden transition-shadow hover:shadow-md flex flex-col">
-    <div className="relative">
-      <Link to={`/product/${genderType}/${categorySlug}/${product.id}`}>
-        <img
-          src={productImage}
-          alt={product.name}
-          className="w-full h-52 object-cover object-center"
-        />
-      </Link>
-      <button
-        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm text-gray-700 hover:text-red-500"
-        aria-label="Add to wishlist"
-      >
-        <Heart className="h-5 w-5" />
-      </button>
+const Pagination = ({ totalPages, currentPage, onPageChange }) => {
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(1, currentPage - halfVisible);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    if (startPage > 1) {
+      pages.push(1);
+      if (startPage > 2) pages.push("...");
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pages.push("...");
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  return (
+    <div className="flex justify-center mt-8">
+      <nav className="flex flex-wrap items-center gap-2">
+        {currentPage > 1 && (
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            className="px-3 py-1 bg-white text-gray-700 hover:bg-gray-50 rounded-md"
+          >
+            Previous
+          </button>
+        )}
+
+        {getPageNumbers().map((page, index) => (
+          <React.Fragment key={index}>
+            {page === "..." ? (
+              <span className="px-2 text-gray-500">...</span>
+            ) : (
+              <button
+                onClick={() => onPageChange(page)}
+                className={`px-3 py-1 rounded-md ${
+                  page === currentPage
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            )}
+          </React.Fragment>
+        ))}
+
+        {currentPage < totalPages && (
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            className="px-3 py-1 bg-white text-gray-700 hover:bg-gray-50 rounded-md"
+          >
+            Next
+          </button>
+        )}
+      </nav>
     </div>
-
-    <div className="p-4 flex flex-col flex-grow">
-      <h2 className="text-sm font-medium text-gray-700 line-clamp-1 mb-1">
-        <Link to={`/product/${genderType}/${categorySlug}/${product.id}`}>
-          {product.name}
-        </Link>
-      </h2>
-
-      <div className="flex items-center mb-2">
-        <div className="flex items-center">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Star
-              key={star}
-              className={`h-4 w-4 ${
-                star <= Math.round(product.rating || 0)
-                  ? "text-yellow-400 fill-yellow-400"
-                  : "text-gray-300"
-              }`}
-            />
-          ))}
-        </div>
-        <span className="text-xs text-gray-500 ml-2">
-          ({product.rating_count || 0})
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between mt-auto">
-        <p className="font-bold text-gray-900">
-          ${product.price ? parseFloat(product.price).toFixed(2) : "0.00"}
-        </p>
-      </div>
-    </div>
-  </article>
-);
-
-// Product List Card View
-const ListCard = ({ product, genderType, categorySlug, productImage }) => (
-  <article className="bg-white rounded-lg shadow-sm overflow-hidden flex transition-shadow hover:shadow-md">
-    <Link
-      to={`/product/${genderType}/${categorySlug}/${product.id}`}
-      className="w-32 h-32 md:w-48 md:h-48 flex-shrink-0"
-    >
-      <img
-        src={productImage}
-        alt={product.name}
-        className="w-full h-full object-cover object-center"
-      />
-    </Link>
-
-    <div className="p-4 flex flex-col flex-grow">
-      <div className="flex justify-between">
-        <h2 className="text-lg font-medium text-gray-800 mb-2">
-          <Link to={`/product/${genderType}/${categorySlug}/${product.id}`}>
-            {product.name}
-          </Link>
-        </h2>
-        <button
-          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700 hover:text-red-500"
-          aria-label="Add to wishlist"
-        >
-          <Heart className="h-5 w-5" />
-        </button>
-      </div>
-
-      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-        {product.description || "No description available"}
-      </p>
-
-      <div className="flex items-center mb-2">
-        <div className="flex items-center">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Star
-              key={star}
-              className={`h-4 w-4 ${
-                star <= Math.round(product.rating || 0)
-                  ? "text-yellow-400 fill-yellow-400"
-                  : "text-gray-300"
-              }`}
-            />
-          ))}
-        </div>
-        <span className="text-xs text-gray-500 ml-2">
-          ({product.rating_count || 0})
-        </span>
-      </div>
-
-      <div className="mt-auto pt-2 flex justify-between items-center">
-        <p className="font-bold text-xl text-gray-900">
-          ${product.price ? parseFloat(product.price).toFixed(2) : "0.00"}
-        </p>
-      </div>
-    </div>
-  </article>
-);
+  );
+};
 
 export default ProductGrid;

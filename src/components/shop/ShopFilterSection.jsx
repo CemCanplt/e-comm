@@ -1,64 +1,50 @@
-import React from "react";
-import { Filter } from "lucide-react";
-import FilterBar from "./FilterBar";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import FilterBar from "./filters/FilterBar";
 
-const MobileFilterButton = ({ showFilters, setShowFilters }) => (
-  <div className="md:hidden mb-6">
-    <button
-      onClick={() => setShowFilters(!showFilters)}
-      className="flex items-center justify-center w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors hover:bg-gray-50"
-    >
-      <Filter className="mr-2 h-5 w-5" />
-      {showFilters ? "Hide Filters" : "Show Filters"}
-    </button>
-  </div>
-);
-
-// Props ile geçirelim, useContext kullanımını kaldıralım
 const ShopFilterSection = ({
   filters,
-  expandedFilterSections,
-  toggleFilterSection,
   handleCategoryChange,
   handleTextSearch,
   handlePriceChange,
   resetFilters,
-  ui,
-  setUi,
-  filteredCategories,
   applyFilters,
 }) => {
-  const { priceRange } = useSelector((state) => state.product);
+  const [isFilterVisible, setIsFilterVisible] = useState(true);
+  const { categories } = useSelector((state) => state.categories);
+
+  // Mobil görünümde filtre toggle butonu
+  const toggleFilters = () => {
+    setIsFilterVisible(!isFilterVisible);
+  };
 
   return (
     <>
-      <MobileFilterButton
-        showFilters={ui.showFilters}
-        setShowFilters={(showFilters) =>
-          setUi((prev) => ({ ...prev, showFilters }))
-        }
-      />
+      <div className="md:hidden mb-6">
+        <button
+          onClick={toggleFilters}
+          className="flex items-center justify-center w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium transition-colors hover:bg-gray-50"
+        >
+          {isFilterVisible ? "Filtreleri Gizle" : "Filtreleri Göster"}
+        </button>
+      </div>
 
       <aside className="col-span-12 md:col-span-3">
         <div
           className={`${
-            ui.showFilters ? "block" : "hidden"
+            isFilterVisible ? "block" : "hidden"
           } md:block w-full bg-white p-5 rounded-lg shadow-sm`}
         >
           <FilterBar
             filterText={filters.text}
-            setFilterText={(text) => handleTextSearch(text)}
-            expandedFilterSections={expandedFilterSections}
-            toggleFilterSection={toggleFilterSection}
-            categories={filteredCategories}
+            setFilterText={handleTextSearch}
+            categories={categories}
             selectedCategory={filters.category}
             handleCategoryChange={handleCategoryChange}
             priceValues={filters.priceRange}
-            handlePriceRangeChange={handlePriceChange}
-            priceRange={priceRange || { min: 0, max: 1000 }}
+            handlePriceChange={handlePriceChange}
             resetFilters={resetFilters}
-            applyTextFilter={() => applyFilters()}
+            applyFilters={applyFilters}
           />
         </div>
       </aside>

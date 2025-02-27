@@ -1,21 +1,13 @@
-import React from "react";
 import ShopBreadcrumb from "./ShopBreadcrumb";
 import GenderFilter from "./GenderFilter";
 
 const ShopHeader = ({
   gender,
-  categorySlug,
+  selectedGender,
+  onGenderChange,
   categories,
-  selectedGenderFilter,
-  handleGenderChange,
+  categorySlug,
 }) => {
-  // Page title based on gender
-  const pageTitle = gender
-    ? gender === "kadin"
-      ? "Women's Collection"
-      : "Men's Collection"
-    : "All Products";
-
   // Get selected category object from categories array
   const selectedCategoryObj =
     categorySlug && categories?.length > 0
@@ -29,6 +21,13 @@ const ShopHeader = ({
         )
       : null;
 
+  const title =
+    selectedGender === "k"
+      ? "Women's Collection"
+      : selectedGender === "e"
+      ? "Men's Collection"
+      : "All Products";
+
   return (
     <>
       <ShopBreadcrumb
@@ -37,13 +36,11 @@ const ShopHeader = ({
         category={selectedCategoryObj}
       />
 
-      <section className="mb-8">
-        <GenderFilter
-          selectedGenderFilter={selectedGenderFilter}
-          title={pageTitle}
-          onGenderChange={handleGenderChange}
-        />
-      </section>
+      <GenderFilter
+        selectedGenderFilter={selectedGender === null ? "all" : selectedGender}
+        title={title}
+        onGenderChange={onGenderChange}
+      />
     </>
   );
 };

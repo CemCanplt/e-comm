@@ -1,6 +1,8 @@
 import axios from "axios";
 import { CATEGORY_ACTIONS } from "../reducers/categoryReducer";
 
+const API_URL = "https://workintech-fe-ecommerce.onrender.com";
+
 export const fetchCategoriesStart = () => ({
   type: CATEGORY_ACTIONS.FETCH_CATEGORIES_START,
 });
@@ -17,63 +19,38 @@ export const fetchCategoriesFailure = (error) => ({
 
 export const fetchCategories = () => {
   return (dispatch) => {
-    dispatch({
-      type: CATEGORY_ACTIONS.FETCH_CATEGORIES_START,
-    });
+    dispatch(fetchCategoriesStart());
 
-    // Kategorileri çek
-    axios.get(
-      "https://workintech-fe-ecommerce.onrender.com/categories"
-    ).then(categoriesResponse => {
-      const categoriesData = categoriesResponse.data;
+    return axios
+      .get(`${API_URL}/categories`)
+      .then((response) => {
+        const categoriesData = response.data;
 
-      // Her kategori için code'dan slug ve gender bilgisi oluştur
-      const categoriesWithSlugs = categoriesData.map((category) => {
-        const code = category.code || "";
-        const parts = code.split(":");
-
-        return {
-          ...category,
-          genderCode: parts[0] || "",
-          slug:
-            parts[1] ||
-            category.title
-              .toLowerCase()
-              .replace(/\s+/g, "-")
-              .replace(/[^a-z0-9-]/g, ""),
-          genderText: parts[0] === "k" ? "kadin" : "erkek",
-        };
-      });
-
-      // Ürünleri çek (daha yüksek limit ile)
-      return axios.get(
-        "https://workintech-fe-ecommerce.onrender.com/products?limit=500"
-      ).then(productsResponse => {
-        const productsData = productsResponse.data.products;
-
-        // Her kategori için ürün sayısını hesapla
-        const categoriesWithCounts = categoriesWithSlugs.map((category) => {
-          const count = productsData.filter(
-            (product) => product.category_id === category.id
-          ).length;
+        // Her kategori için code'dan slug ve gender bilgisi oluştur
+        const categoriesWithSlugs = categoriesData.map((category) => {
+          const code = category.code || "";
+          const parts = code.split(":");
 
           return {
             ...category,
-            productCount: count,
+            genderCode: parts[0] || "",
+            slug:
+              parts[1] ||
+              category.title
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-]/g, ""),
+            genderText: parts[0] === "k" ? "kadin" : "erkek",
           };
         });
 
-        dispatch({
-          type: CATEGORY_ACTIONS.FETCH_CATEGORIES_SUCCESS,
-          payload: categoriesWithCounts,
-        });
+        dispatch(fetchCategoriesSuccess(categoriesWithSlugs));
+        return categoriesWithSlugs;
+      })
+      .catch((error) => {
+        console.error("Error fetching categories:", error);
+        dispatch(fetchCategoriesFailure(error.message));
+        throw error;
       });
-    }).catch(error => {
-      console.error("Error fetching categories:", error);
-      dispatch({
-        type: CATEGORY_ACTIONS.FETCH_CATEGORIES_FAILURE,
-        payload: error.message,
-      });
-    });
   };
 };

@@ -21,6 +21,7 @@ function ProductDetail() {
   const history = useHistory();
   const dispatch = useDispatch();
   const { card } = useSelector((state) => state.shoppingCard);
+  const { items: categories } = useSelector((state) => state.categories);
 
   // State
   const [product, setProduct] = useState(null);
@@ -32,115 +33,103 @@ function ProductDetail() {
   const [activeTab, setActiveTab] = useState("description");
 
   useEffect(() => {
-    const fetchProductData = () => {
+    const fetchProductData = async () => {
       setLoading(true);
+      setError(null);
 
-      // Fetch product data
-      axios
-        .get(
+      // Debug URL parameters
+      console.log("URL Parameters:", { gender, categorySlug, productId });
+
+      if (!productId) {
+        setError("Invalid product ID");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch product data
+        const productResponse = await axios.get(
           `https://workintech-fe-ecommerce.onrender.com/products/${productId}`
-        )
-        .then((response) => {
-          const productData = response.data;
+        );
 
-          // Get category info
-          if (productData.category_id) {
-            // Fetch all categories
-            return axios
-              .get("https://workintech-fe-ecommerce.onrender.com/categories")
-              .then((categoriesResponse) => {
-                // Find product's category
-                const categoryInfo = categoriesResponse.data.find(
-                  (cat) => cat.id === productData.category_id
-                );
+        let productData = productResponse.data;
 
-                // Update URL with correct information
-                if (categoryInfo) {
-                  // Add category info to product data
-                  productData.category = categoryInfo.title;
+        if (!productData) {
+          setError("Product not found");
+          setLoading(false);
+          return;
+        }
 
-                  // Determine gender and slug from category code
-                  const code = categoryInfo.code || "";
-                  const codeParts = code.split(":");
-
-                  const genderCode = codeParts[0] || "";
-                  const categorySlug =
-                    codeParts[1] ||
-                    categoryInfo.title
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")
-                      .replace(/[^a-z0-9-]/g, "");
-
-                  // Set gender info
-                  productData.gender = genderCode;
-
-                  // process images
-                  if (productData.images) {
-                    if (typeof productData.images === "string") {
-                      try {
-                        productData.images = JSON.parse(productData.images);
-                      } catch (e) {
-                        productData.images = [productData.images];
-                      }
-                    }
-
-                    // If images is array of objects, extract URLs
-                    if (
-                      Array.isArray(productData.images) &&
-                      productData.images[0] &&
-                      typeof productData.images[0] === "object"
-                    ) {
-                      productData.images = productData.images.map(
-                        (img) => img.url || ""
-                      );
-                    }
-                  } else if (productData.image) {
-                    productData.images = [productData.image];
-                  } else {
-                    productData.images = [
-                      "https://placehold.co/300x300/gray/white?text=No+Image",
-                    ];
-                  }
-
-                  setProduct(productData);
-
-                  // Fetch related products by category
-                  return axios
-                    .get(
-                      `https://workintech-fe-ecommerce.onrender.com/products?category_id=${productData.category_id}&limit=4`
-                    )
-                    .then((relatedResponse) => {
-                      setRelatedProducts(
-                        relatedResponse.data.products.filter(
-                          (p) => p.id !== parseInt(productId)
-                        )
-                      );
-                      return productData;
-                    });
-                }
-
-                return productData;
-              })
-              .then((finalProductData) => {
-                setProduct(finalProductData);
-              });
+        // Process images
+        if (productData.images) {
+          if (typeof productData.images === "string") {
+            try {
+              productData.images = JSON.parse(productData.images);
+            } catch (e) {
+              productData.images = [productData.images];
+            }
           }
 
-          // If no category processing needed
-          setProduct(productData);
-          return productData;
-        })
-        .catch((err) => {
-          console.error("Error fetching product:", err);
-          setError(err.message || "Failed to load product");
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+          // If images is array of objects, extract URLs
+          if (
+            Array.isArray(productData.images) &&
+            productData.images[0] &&
+            typeof productData.images[0] === "object"
+          ) {
+            productData.images = productData.images.map((img) => img.url || "");
+          }
+        } else if (productData.image) {
+          productData.images = [productData.image];
+        } else {
+          productData.images = [
+            "https://placehold.co/300x300/gray/white?text=No+Image",
+          ];
+        }
+
+        // Get category info from Redux store
+        if (productData.category_id) {
+          const categoryInfo = categories.find(
+            (cat) => cat.id === productData.category_id
+          );
+
+          if (categoryInfo) {
+            productData.category = categoryInfo.title;
+            productData.gender = categoryInfo.genderCode;
+            productData.category_slug = categoryInfo.slug;
+
+            // Only update URL if we came from a simple URL
+            if (!gender && !categorySlug) {
+              const urlGender = categoryInfo.genderText;
+              const urlCategorySlug = categoryInfo.slug;
+              history.replace(
+                `/product/${urlGender}/${urlCategorySlug}/${productId}`
+              );
+            }
+
+            // Fetch related products
+            const relatedResponse = await axios.get(
+              `https://workintech-fe-ecommerce.onrender.com/products?category_id=${productData.category_id}&limit=4`
+            );
+
+            setRelatedProducts(
+              relatedResponse.data.products.filter(
+                (p) => p.id !== parseInt(productId)
+              )
+            );
+          }
+        }
+
+        setProduct(productData);
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        setError("Product not found");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProductData();
-  }, [productId]);
+  }, [productId, gender, categorySlug, history, categories]);
 
   const handleAddToCard = () => {
     // Check if item already exists in cart
