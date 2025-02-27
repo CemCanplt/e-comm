@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react"; // useEffect'i ekleyin
-import { useSelector } from "react-redux"; // useSelector'ı ekleyin
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { loginUser } from "../store/actions/userActions";
+import axios from "axios";
 
 function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,32 +33,34 @@ function Login() {
     setShowWarning(isAuthenticated);
   }, [isAuthenticated]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = (data) => {
     setIsSubmitting(true);
-    try {
-      await dispatch(
-        loginUser({
-          email: data.email,
-          password: data.password,
-          rememberMe: data.rememberMe,
-          switchAccount: isAuthenticated, // Yeni parametre
-        })
-      );
 
-      toast.success("Login successful!", {
-        position: "top-center",
-        autoClose: 3000,
+    dispatch(
+      loginUser({
+        email: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe,
+        switchAccount: isAuthenticated, // Yeni parametre
+      })
+    )
+      .then(() => {
+        toast.success("Login successful!", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+        setShowWarning(false);
+        history.replace(from);
+      })
+      .catch((error) => {
+        toast.error(error?.message || "Invalid email or password", {
+          position: "top-center",
+          autoClose: 5000,
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-      setShowWarning(false);
-      history.replace(from);
-    } catch (error) {
-      toast.error(error?.message || "Invalid email or password", {
-        position: "top-center",
-        autoClose: 5000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return (

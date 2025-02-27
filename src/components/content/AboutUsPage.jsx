@@ -1,14 +1,20 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Facebook, Instagram, Twitter } from "lucide-react";
+import axios from "axios";
 
 const AboutUsPage = () => {
   const [teamMembers, setTeamMembers] = useState([]);
 
   useEffect(() => {
-    fetch("https://jsonplaceholder.typicode.com/users")
-      .then((res) => res.json())
-      .then((data) => setTeamMembers(data));
+    axios
+      .get("https://jsonplaceholder.typicode.com/users")
+      .then((res) => {
+        setTeamMembers(res.data);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch team members:", error);
+      });
   }, []);
 
   return (

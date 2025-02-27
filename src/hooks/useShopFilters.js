@@ -7,6 +7,9 @@ import {
   setGenderFilter,
 } from "../store/reducers/productReducer";
 import { fetchProducts } from "../store/actions/productActions";
+import axios from "axios";
+
+const baseURL = "https://workintech-fe-ecommerce.onrender.com";
 
 export const useShopFilters = ({
   priceRange,
@@ -319,6 +322,19 @@ export const useShopFilters = ({
       dispatch(fetchProducts(params));
     }
   }, [dispatch, gender, categoryId, itemsPerPage, productList]);
+
+  // Email validation with promise chain
+  const validateEmail = (value) => {
+    return axios
+      .get(`${baseURL}/check-email?email=${value}`)
+      .then((response) => {
+        return response.data.available || "Bu email adresi zaten kayıtlı";
+      })
+      .catch((error) => {
+        console.error("Email kontrol hatası:", error);
+        return true;
+      });
+  };
 
   return {
     selectedCategory,

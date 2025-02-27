@@ -32,112 +32,115 @@ function ProductDetail() {
   const [activeTab, setActiveTab] = useState("description");
 
   useEffect(() => {
-    const fetchProductData = async () => {
+    const fetchProductData = () => {
       setLoading(true);
-      try {
-        // Fetch product data
-        const response = await axios.get(
+
+      // Fetch product data
+      axios
+        .get(
           `https://workintech-fe-ecommerce.onrender.com/products/${productId}`
-        );
+        )
+        .then((response) => {
+          const productData = response.data;
 
-        const productData = response.data;
+          // Get category info
+          if (productData.category_id) {
+            // Fetch all categories
+            return axios
+              .get("https://workintech-fe-ecommerce.onrender.com/categories")
+              .then((categoriesResponse) => {
+                // Find product's category
+                const categoryInfo = categoriesResponse.data.find(
+                  (cat) => cat.id === productData.category_id
+                );
 
-        // Get category info
-        if (productData.category_id) {
-          // Fetch all categories
-          const categoriesResponse = await axios.get(
-            "https://workintech-fe-ecommerce.onrender.com/categories"
-          );
+                // Update URL with correct information
+                if (categoryInfo) {
+                  // Add category info to product data
+                  productData.category = categoryInfo.title;
 
-          // Find product's category
-          const categoryInfo = categoriesResponse.data.find(
-            (cat) => cat.id === productData.category_id
-          );
+                  // Determine gender and slug from category code
+                  const code = categoryInfo.code || "";
+                  const codeParts = code.split(":");
 
-          // Update URL with correct information
-          if (categoryInfo) {
-            // Add category info to product data
-            productData.category = categoryInfo.title;
+                  const genderCode = codeParts[0] || "";
+                  const categorySlug =
+                    codeParts[1] ||
+                    categoryInfo.title
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")
+                      .replace(/[^a-z0-9-]/g, "");
 
-            // Determine gender and slug from category code
-            const code = categoryInfo.code || "";
-            const codeParts = code.split(":");
+                  // Set gender info
+                  productData.gender = genderCode;
 
-            const genderCode = codeParts[0] || "";
-            const categorySlug =
-              codeParts[1] ||
-              categoryInfo.title
-                .toLowerCase()
-                .replace(/\s+/g, "-")
-                .replace(/[^a-z0-9-]/g, "");
+                  // process images
+                  if (productData.images) {
+                    if (typeof productData.images === "string") {
+                      try {
+                        productData.images = JSON.parse(productData.images);
+                      } catch (e) {
+                        productData.images = [productData.images];
+                      }
+                    }
 
-            // Set gender info
-            productData.gender = genderCode;
-            const genderText = genderCode === "k" ? "kadin" : "erkek";
+                    // If images is array of objects, extract URLs
+                    if (
+                      Array.isArray(productData.images) &&
+                      productData.images[0] &&
+                      typeof productData.images[0] === "object"
+                    ) {
+                      productData.images = productData.images.map(
+                        (img) => img.url || ""
+                      );
+                    }
+                  } else if (productData.image) {
+                    productData.images = [productData.image];
+                  } else {
+                    productData.images = [
+                      "https://placehold.co/300x300/gray/white?text=No+Image",
+                    ];
+                  }
 
-            // Create correct URL path
-            const correctPath = `/product/${genderText}/${categorySlug}/${productId}`;
+                  setProduct(productData);
 
-            // Update URL if necessary
-            if (history.location.pathname !== correctPath) {
-              history.replace(correctPath);
-            }
+                  // Fetch related products by category
+                  return axios
+                    .get(
+                      `https://workintech-fe-ecommerce.onrender.com/products?category_id=${productData.category_id}&limit=4`
+                    )
+                    .then((relatedResponse) => {
+                      setRelatedProducts(
+                        relatedResponse.data.products.filter(
+                          (p) => p.id !== parseInt(productId)
+                        )
+                      );
+                      return productData;
+                    });
+                }
+
+                return productData;
+              })
+              .then((finalProductData) => {
+                setProduct(finalProductData);
+              });
           }
-        }
 
-        // Process images data
-        if (productData.images) {
-          if (typeof productData.images === "string") {
-            try {
-              productData.images = JSON.parse(productData.images);
-            } catch (e) {
-              productData.images = [productData.images];
-            }
-          } else if (Array.isArray(productData.images)) {
-            // Extract URLs if images are objects
-            if (
-              productData.images[0] &&
-              typeof productData.images[0] === "object"
-            ) {
-              productData.images = productData.images.map(
-                (img) => img.url || ""
-              );
-            }
-          }
-        } else if (productData.image) {
-          productData.images = [productData.image];
-        } else {
-          productData.images = [
-            "https://placehold.co/300x300/gray/white?text=No+Image",
-          ];
-        }
-
-        setProduct(productData);
-
-        // Fetch related products by category
-        if (response.data.category_id) {
-          const relatedResponse = await axios.get(
-            `https://workintech-fe-ecommerce.onrender.com/products?category_id=${response.data.category_id}&limit=4`
-          );
-          setRelatedProducts(
-            relatedResponse.data.products.filter(
-              (p) => p.id !== parseInt(productId)
-            )
-          );
-        }
-      } catch (err) {
-        console.error("Error fetching product:", err);
-        setError(err.message || "Failed to load product");
-      } finally {
-        setLoading(false);
-      }
+          // If no category processing needed
+          setProduct(productData);
+          return productData;
+        })
+        .catch((err) => {
+          console.error("Error fetching product:", err);
+          setError(err.message || "Failed to load product");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     };
 
     fetchProductData();
-    window.scrollTo(0, 0);
-    setSelectedImage(0);
-    setQuantity(1);
-  }, [productId, history]);
+  }, [productId]);
 
   const handleAddToCard = () => {
     // Check if item already exists in cart

@@ -200,9 +200,6 @@ const FilterBar = ({
               >
                 <div className="flex items-center">
                   <span>{category.title}</span>
-                  <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                    {category.gender === "k" ? "W" : "M"}
-                  </span>
                 </div>
                 <span className="text-xs text-gray-500 bg-gray-50 rounded-full px-2 py-1">
                   {category.productCount || 0}

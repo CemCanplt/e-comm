@@ -4,7 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useHistory } from "react-router-dom";
 import { fetchCategories } from "../store/actions/categoryActions";
 import { fetchProducts } from "../store/actions/productActions";
-import { setGenderFilter } from "../store/reducers/productReducer";
+import {
+  setGenderFilter,
+  setFetchState,
+} from "../store/reducers/productReducer";
 
 // Components
 import ShopBreadcrumb from "./shop/ShopBreadcrumb";
@@ -58,23 +61,124 @@ function Shop() {
 
   // İlk ürünleri yükle ve URL parametrelerini işle
   useEffect(() => {
-    const params = { limit: 12, offset: 0 };
+    // İlk olarak yükleniyor durumunu ayarla
+    dispatch(setFetchState("FETCHING"));
 
+    // URL'den gender bilgisini al ve iç state'i güncelle
     if (gender) {
-      params.gender = gender === "kadin" ? "k" : "e";
-      setSelectedGenderFilter(params.gender);
+      const genderCode = gender === "kadin" ? "k" : "e";
+      setSelectedGenderFilter(genderCode);
     } else {
       setSelectedGenderFilter("all");
     }
 
+    // Kategori bilgisini güncelle
     if (categoryId) {
-      params.category_id = parseInt(categoryId);
       setSelectedCategory(parseInt(categoryId));
     }
 
+    // API için parametreleri hazırla
+    const params = { limit: 12, offset: 0 };
+    if (gender) {
+      params.gender = gender === "kadin" ? "k" : "e";
+    }
+    if (categoryId) {
+      params.category_id = parseInt(categoryId);
+    }
+
     console.log("İlk yükleme parametreleri:", params);
+
+    // Ürünleri getir
     dispatch(fetchProducts(params));
   }, [dispatch, gender, categoryId]);
+
+  // API'den ürünler gelince filtreleme yap
+  useEffect(() => {
+    if (fetchState === "FETCHED" && productList && productList.length > 0) {
+      console.log("Ürün listesi güncellendi:", productList.length);
+
+      let filteredProducts = [...productList];
+
+      // Cinsiyet filtreleme - kategori üzerinden yap
+      if (
+        selectedGenderFilter !== "all" &&
+        categories &&
+        categories.length > 0
+      ) {
+        // Kategori cinsiyetlerini içeren bir harita oluştur
+        const categoryGenderMap = {};
+        categories.forEach((category) => {
+          categoryGenderMap[category.id] =
+            category.gender || category.genderCode;
+        });
+
+        // Cinsiyet filtresini uygula - kategoriler üzerinden
+        filteredProducts = filteredProducts.filter((product) => {
+          if (product.category_id && categoryGenderMap[product.category_id]) {
+            return (
+              categoryGenderMap[product.category_id] === selectedGenderFilter
+            );
+          }
+          return false; // Kategori bilgisi yoksa filtreleme dışında tut
+        });
+
+        console.log(
+          `Cinsiyet filtresi sonrası (${selectedGenderFilter}): ${filteredProducts.length} ürün`
+        );
+      }
+
+      // Kategori filtrelemesi - sayısal karşılaştırma yapıldığından emin olalım
+      if (selectedCategory !== "All") {
+        const numericCategoryId = parseInt(selectedCategory);
+
+        filteredProducts = filteredProducts.filter((product) => {
+          const productCategoryId = parseInt(product.category_id);
+          return productCategoryId === numericCategoryId;
+        });
+
+        console.log(
+          `Kategori filtresi sonrası (${selectedCategory}): ${filteredProducts.length} ürün`
+        );
+      }
+
+      // Fiyat aralığı filtreleme
+      filteredProducts = filteredProducts.filter(
+        (product) =>
+          product.price >= priceValues[0] && product.price <= priceValues[1]
+      );
+      console.log(`Fiyat filtresi sonrası: ${filteredProducts.length} ürün`);
+
+      // Metin filtreleme
+      if (filterText) {
+        filteredProducts = filteredProducts.filter(
+          (product) =>
+            product.name?.toLowerCase().includes(filterText.toLowerCase()) || // name alanı kullan
+            product.title?.toLowerCase().includes(filterText.toLowerCase()) // veya title alanını kontrol et
+        );
+        console.log(
+          `Metin filtresi sonrası (${filterText}): ${filteredProducts.length} ürün`
+        );
+      }
+
+      // Sıralama
+      if (sortOption === "price-asc") {
+        filteredProducts.sort((a, b) => a.price - b.price);
+      } else if (sortOption === "price-desc") {
+        filteredProducts.sort((a, b) => b.price - a.price);
+      }
+
+      setDisplayedProducts(filteredProducts);
+    }
+  }, [
+    productList,
+    fetchState,
+    categories,
+    selectedGenderFilter,
+    selectedCategory,
+    priceValues,
+    filterText,
+    sortOption,
+  ]);
 
   // Kategori haritası oluştur - hızlı erişim için
   const categoryMap = useMemo(() => {
@@ -87,54 +191,12 @@ function Shop() {
     return map;
   }, [categories]);
 
-  // API'den gelen ürün listesini ayarla - Burada değişiklik yapıyoruz
-  useEffect(() => {
-    if (productList && productList.length > 0) {
-      console.log("Ürün listesi güncellendi:", productList.length);
-
-      // Cinsiyet filtrelemesi uygula
-      if (
-        selectedGenderFilter !== "all" &&
-        categories &&
-        categories.length > 0
-      ) {
-        // Kategorilerden bir map oluştur
-        const categoryGenderMap = {};
-
-        categories.forEach((category) => {
-          categoryGenderMap[category.id] =
-            category.gender || category.genderCode;
-        });
-
-        // Ürünleri filtrele
-        const filtered = productList.filter((product) => {
-          // Ürünün kategorisinin cinsiyet bilgisine bak
-          if (product.category_id && categoryGenderMap[product.category_id]) {
-            return (
-              categoryGenderMap[product.category_id] === selectedGenderFilter
-            );
-          }
-          // Ürünün kendi cinsiyet bilgisi varsa onu kullan
-          if (product.gender) {
-            return product.gender === selectedGenderFilter;
-          }
-          return false;
-        });
-
-        console.log(
-          `Filtreden sonra ${filtered.length} ürün kaldı (cinsiyet: ${selectedGenderFilter})`
-        );
-        setDisplayedProducts(filtered);
-      } else {
-        // Filtre yoksa tüm ürünleri göster
-        setDisplayedProducts(productList);
-      }
-    }
-  }, [productList, categories, selectedGenderFilter]);
-
-  // Gender change handler - Bu fonksiyonu da güncelliyoruz
+  // Gender change handler - Bu fonksiyonu optimize ediyoruz
   const handleGenderChange = (gender) => {
     console.log("Cinsiyet filtreleme:", gender);
+
+    // Yükleniyor durumunu aktif et - FIXED
+    dispatch(setFetchState("FETCHING"));
 
     // Redux state güncelle
     dispatch(setGenderFilter(gender === "all" ? null : gender));
@@ -158,7 +220,7 @@ function Shop() {
       setSelectedCategory("All");
     }
 
-    // Yeni veri getir
+    // Yeni veri getir - API'yi kullanarak direkt filtrelenmiş veri çek
     const params = {
       limit: 12,
       offset: 0,
@@ -260,19 +322,51 @@ function Shop() {
 
   // Handle category selection
   const handleCategorySelect = (category) => {
+    // Debugging için category nesnesini incele
+    console.log("Seçilen kategori:", category);
+
+    // Kategori "all" ise
     if (category.id === "all") {
       setSelectedCategory("All");
 
+      // URL'i güncelle - eğer cinsiyet seçili ise onu koru
       const url =
         selectedGenderFilter !== "all"
           ? `/shop/${selectedGenderFilter === "k" ? "kadin" : "erkek"}`
           : "/shop";
 
       history.push(url);
+
+      // API parametreleri - "all" seçildiğinde category_id parametresi olmamalı
+      const params = {
+        limit: 12,
+        offset: 0,
+      };
+
+      // Sadece cinsiyet filtresi varsa ekle
+      if (selectedGenderFilter !== "all") {
+        params.gender = selectedGenderFilter;
+      }
+
+      console.log("All kategorisi seçildi, API parametreleri:", params);
+      dispatch(fetchProducts(params));
     } else {
-      setSelectedCategory(category.id);
-      const genderCode = category.gender || category.genderCode || "e";
-      const genderText = genderCode === "k" ? "kadin" : "erkek";
+      // Önemli: category.id bir string olabilir, integer'a dönüştür
+      const categoryId = parseInt(category.id);
+
+      // State'i güncelle
+      setSelectedCategory(categoryId);
+      console.log(
+        `Kategori seçildi (numeric ID): ${categoryId}, Başlık: ${category.title}`
+      );
+
+      // URL için gerekli bilgileri hazırla
+      const genderParam =
+        selectedGenderFilter !== "all"
+          ? selectedGenderFilter === "k"
+            ? "kadin"
+            : "erkek"
+          : null;
 
       const slug =
         category.slug ||
@@ -281,22 +375,28 @@ function Shop() {
           .replace(/\s+/g, "-")
           .replace(/[^a-z0-9-]/g, "");
 
-      history.push(`/shop/${genderText}/${slug}/${category.id}`);
-    }
-
-    const params = { limit: 12, offset: 0 };
-
-    if (category.id !== "all") {
-      params.category_id = category.id;
-
-      if (category.gender || category.genderCode) {
-        const genderCode = category.gender || category.genderCode;
-        params.gender = genderCode;
-        setSelectedGenderFilter(genderCode);
+      // URL'i güncelle - cinsiyet seçiliyse dahil et, değilse yalnızca kategori
+      if (genderParam) {
+        history.push(`/shop/${genderParam}/${slug}/${categoryId}`);
+      } else {
+        history.push(`/shop/category/${slug}/${categoryId}`);
       }
-    }
 
-    dispatch(fetchProducts(params));
+      // API parametrelerini hazırla - doğrudan numeric değer kullan
+      const params = {
+        limit: 12,
+        offset: 0,
+        category_id: categoryId,
+      };
+
+      // Eğer cinsiyet filtresi aktifse, onu da ekle
+      if (selectedGenderFilter !== "all") {
+        params.gender = selectedGenderFilter;
+      }
+
+      console.log("Kategori seçildi, API parametreleri:", params);
+      dispatch(fetchProducts(params));
+    }
   };
 
   // Page title based on gender

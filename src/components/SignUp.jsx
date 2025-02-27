@@ -3,7 +3,9 @@ import { useForm } from "react-hook-form";
 import { Link, useHistory } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios"; // Axios'u doğrudan import et
+import axios from "axios";
+
+const baseURL = "https://workintech-fe-ecommerce.onrender.com";
 
 function SignUp() {
   const [roles, setRoles] = useState([]);
@@ -25,68 +27,86 @@ function SignUp() {
   });
 
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchRoles = () => {
       setLoading(true);
-      try {
-        const { data } = await axios.get(
-          "https://workintech-fe-ecommerce.onrender.com/roles"
-        );
-        setRoles(data);
-      } catch (error) {
-        toast.error("Failed to fetch roles. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
+
+      axios
+        .get(`${baseURL}/roles`)
+        .then(({ data }) => {
+          setRoles(data);
+        })
+        .catch((error) => {
+          toast.error("Failed to fetch roles. Please try again later.");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     };
 
     fetchRoles();
   }, []);
 
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
-    try {
-      const signupData = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role_id: Number(data.role_id),
-        ...(isStore && {
-          store: {
-            name: data.store_name,
-            phone: data.store_phone,
-            tax_no: data.store_tax_no,
-            bank_account: data.store_bank_account,
-          },
-        }),
-      };
-
-      await axios.post(
-        "https://workintech-fe-ecommerce.onrender.com/signup",
-        signupData
-      );
-
-      toast.warn(
-        "You need to click the link in your email to activate your account!"
-      );
-      history.push("/login");
-    } catch (error) {
-      const { response } = error;
-      const { data, status } = response || {};
-      const { err, error: errMsg, message } = data || {};
-
-      if (status === 409 && err?.errno === 19 && err?.code === "SQLITE_CONSTRAINT") {
-        toast.error(
-          "This email is already registered. Please try with a different email address."
-        );
-      } else {
-        toast.error(errMsg || message || "Signup failed");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+  const validate = (value) => {
+    return axios
+      .get(`${baseURL}/check-email?email=${value}`)
+      .then((response) => {
+        return response.data.available || "Bu email adresi zaten kayıtlı";
+      })
+      .catch((error) => {
+        console.error("Email kontrol hatası:", error);
+        return true; // Hata durumunda geçerli say
+      });
   };
 
-  const selectedRole = watch("role_id"); // roleId -> role_id
+  const onSubmit = (data) => {
+    setIsSubmitting(true);
+
+    const signupData = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role_id: Number(data.role_id),
+      ...(isStore && {
+        store: {
+          name: data.store_name,
+          phone: data.store_phone,
+          tax_no: data.store_tax_no,
+          bank_account: data.store_bank_account,
+        },
+      }),
+    };
+
+    axios
+      .post(`${baseURL}/signup`, signupData)
+      .then(() => {
+        toast.warn(
+          "You need to click the link in your email to activate your account!"
+        );
+        history.push("/login");
+      })
+      .catch((error) => {
+        const { response } = error;
+        const { data, status } = response || {};
+        const { err, error: errMsg, message } = data || {};
+
+        if (
+          status === 409 &&
+          err?.errno === 19 &&
+          err?.code === "SQLITE_CONSTRAINT"
+        ) {
+          toast.error(
+            "This email is already registered. Please try with a different email address."
+          );
+        } else {
+          toast.error(errMsg || message || "Signup failed");
+        }
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
+  };
+
+  const selectedRole = watch("role_id");
   useEffect(() => {
     setIsStore(Number(selectedRole) === 2);
   }, [selectedRole]);
@@ -215,7 +235,8 @@ function SignUp() {
                 type="password"
                 {...register("password_repeat", {
                   required: "Password repeat is required",
-                  validate: ({ password }) => password === watch("password") || "Passwords do not match",
+                  validate: ({ password }) =>
+                    password === watch("password") || "Passwords do not match",
                 })}
                 className={`appearance-none rounded relative block w-full px-3 py-2 border ${
                   errors.password_repeat ? "border-red-500" : "border-gray-300"

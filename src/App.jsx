@@ -32,11 +32,16 @@ function App() {
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
 
-          {/* Shop routes with parameters - fixed order */}
+          {/* Shop routes with parameters */}
           <Route exact path="/shop" component={Shop} />
           <Route exact path="/shop/:gender" component={Shop} />
-          <Route exact path="/shop/:gender/:categorySlug" component={Shop} />
           <Route
+            exact
+            path="/shop/category/:categorySlug/:categoryId"
+            component={Shop}
+          />
+          <Route
+            exact
             path="/shop/:gender/:categorySlug/:categoryId"
             component={Shop}
           />
