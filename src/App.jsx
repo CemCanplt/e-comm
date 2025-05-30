@@ -31,13 +31,16 @@ function App() {
           <Route exact path="/" component={PageContent} />
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
-          
+
           {/* Ürün detay rotasını en spesifik rotalardan önce tanımlayalım */}
           <Route path="/shop/product/:id" component={ProductDetail} />
-          
+
           <Route exact path="/shop" component={Shop} />
           <Route exact path="/shop/:gender" component={Shop} />
-          <Route path="/shop/:gender/:categoryName/:categoryId" component={Shop} />
+          <Route
+            path="/shop/:gender/:categoryName/:categoryId"
+            component={Shop}
+          />
 
           {/* Diğer rotalar */}
           <Route path="/contact" component={Contact} />

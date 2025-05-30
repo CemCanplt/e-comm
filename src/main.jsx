@@ -7,11 +7,9 @@ import { BrowserRouter as Router } from "react-router-dom";
 import store from "./store";
 
 createRoot(document.getElementById("root")).render(
-  
-    <Provider store={store}>
-      <Router>
-        <App />
-      </Router>
-    </Provider>
-  
+  <Provider store={store}>
+    <Router>
+      <App />
+    </Router>
+  </Provider>
 );
